@@ -11,8 +11,8 @@
         }
         canvas {
             display: block;
-            /* width: 100%;
-            height: 100%; */
+            width: 800px;
+            height: 800px;
         }
         .cont {
             position: absolute;
@@ -25,10 +25,21 @@
         .list select{
             float: right;
         }
+        #inputs {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            color: white;
+        }
     </style>
 </head>
 <body>
-    <canvas id="canvas"></canvas>
+    <div id="inputs">
+        X <input type="range" name="cordX" id="cordX" min="-50" max="50"><br>
+        Y <input type="range" name="cordX" id="cordY" min="-100" max="0"><br>
+        Z <input type="range" name="cordX" id="cordZ" min="-300" max="0">
+    </div>
+    <canvas id="canvas" width="800" height="800"></canvas>
     <script src="main.bundle.js"></script>
 </body>
 </html>

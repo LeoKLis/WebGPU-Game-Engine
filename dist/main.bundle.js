@@ -2,6 +2,54 @@
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
+/***/ "./src/objParser.ts":
+/*!**************************!*\
+  !*** ./src/objParser.ts ***!
+  \**************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   loadObj: () => (/* binding */ loadObj),
+/* harmony export */   parseObj: () => (/* binding */ parseObj)
+/* harmony export */ });
+async function loadObj(filePath) {
+    const res = await fetch(filePath);
+    const file = await res.text();
+    return file;
+}
+function parseObj(text) {
+    let lines = text.split('\n');
+    let firstVertIndex = lines.findIndex((line) => {
+        return line.split(" ")[0] == 'v';
+    }) - 1;
+    let vertexData = new Array;
+    lines.forEach((line) => {
+        if (line.split(" ")[0] == 'f') {
+            let lineElements = line.trim().split(" ").slice(1);
+            let id1 = parseInt(lineElements[0].split("/")[0]);
+            let data1 = getVertexData(lines[id1 + firstVertIndex]);
+            for (let i = 0; i < lineElements.length - 2; i++) {
+                let id2 = parseInt(lineElements[1 + i].split("/")[0]);
+                let data2 = getVertexData(lines[id2 + firstVertIndex]);
+                let id3 = parseInt(lineElements[2 + i].split("/")[0]);
+                let data3 = getVertexData(lines[id3 + firstVertIndex]);
+                vertexData.push(...[...data1, ...data2, ...data3]);
+            }
+        }
+    });
+    return new Float32Array(vertexData);
+}
+function getVertexData(line) {
+    let lineElements = line.split(" ").slice(1);
+    let output = lineElements.map((el) => parseFloat(el));
+    output.push(1.0);
+    return output;
+}
+
+
+/***/ }),
+
 /***/ "./src/renderer.ts":
 /*!*************************!*\
   !*** ./src/renderer.ts ***!
@@ -14,15 +62,26 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _shaders_triangle_wgsl__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./shaders/triangle.wgsl */ "./src/shaders/triangle.wgsl");
 
+// import { cubeVertex } from "./objects/cube"
+let corX = document.getElementById("cordX");
+let corY = document.getElementById("cordY");
+let corZ = document.getElementById("cordZ");
 class Renderer {
-    device;
     canvas;
+    device;
     context;
     renderPipeline;
+    bindGroup;
+    buffer;
+    teapotBuffer;
+    bufferData;
+    depthTexture;
+    vertexData;
     constructor(canvas) {
         this.canvas = canvas;
     }
-    async init() {
+    async init(vertexData) {
+        this.vertexData = vertexData;
         const adapter = await navigator.gpu.requestAdapter();
         this.device = await adapter.requestDevice();
         this.context = this.canvas.getContext('webgpu');
@@ -30,47 +89,105 @@ class Renderer {
             device: this.device,
             format: navigator.gpu.getPreferredCanvasFormat()
         });
-        this.createPipeline();
-        this.render();
-    }
-    createPipeline() {
-        const renderPipelineDescriptor = {
+        const bindGroupLayout = this.device.createBindGroupLayout({
+            entries: [
+                {
+                    binding: 0,
+                    visibility: GPUShaderStage.VERTEX,
+                    buffer: {
+                        type: "uniform",
+                    }
+                },
+                {
+                    binding: 1,
+                    visibility: GPUShaderStage.VERTEX,
+                    buffer: {
+                        type: "read-only-storage",
+                    }
+                }
+            ]
+        });
+        const pipelineLayout = this.device.createPipelineLayout({
+            bindGroupLayouts: [bindGroupLayout]
+        });
+        this.renderPipeline = this.device.createRenderPipeline({
             label: "Render pipeline",
-            layout: "auto",
+            layout: pipelineLayout,
             vertex: {
                 module: this.device.createShaderModule({ code: _shaders_triangle_wgsl__WEBPACK_IMPORTED_MODULE_0__["default"] })
             },
             fragment: {
                 module: this.device.createShaderModule({ code: _shaders_triangle_wgsl__WEBPACK_IMPORTED_MODULE_0__["default"] }),
                 targets: [{ format: navigator.gpu.getPreferredCanvasFormat() }]
+            },
+            depthStencil: {
+                format: 'depth24plus',
+                depthWriteEnabled: true,
+                depthCompare: 'less',
+            },
+            primitive: {
+                topology: 'point-list'
             }
-        };
-        this.renderPipeline = this.device.createRenderPipeline(renderPipelineDescriptor);
+        });
+        this.depthTexture = this.device.createTexture({
+            size: [this.canvas.clientWidth * window.devicePixelRatio, this.canvas.clientHeight * window.devicePixelRatio],
+            format: 'depth24plus',
+            usage: GPUTextureUsage.RENDER_ATTACHMENT,
+        });
+        let bufferDataLength = 4 * 4;
+        this.bufferData = new Float32Array(bufferDataLength);
+        this.buffer = this.device.createBuffer({
+            label: 'Ovaj buffer?',
+            size: bufferDataLength,
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        });
+        this.teapotBuffer = this.device.createBuffer({
+            size: this.vertexData.byteLength,
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+        });
+        this.bindGroup = this.device.createBindGroup({
+            label: 'Bind group for rotating triangles',
+            layout: bindGroupLayout,
+            entries: [
+                { binding: 0, resource: { buffer: this.buffer } },
+                { binding: 1, resource: { buffer: this.teapotBuffer } },
+            ]
+        });
+        requestAnimationFrame(this.render);
     }
-    render(bindGroups) {
-        const commandEncoder = this.device?.createCommandEncoder({ label: "Command encoder in renderer" });
+    render = (time) => {
+        this.bufferData[0] = corX.valueAsNumber;
+        this.bufferData[1] = corY.valueAsNumber;
+        this.bufferData[2] = corZ.valueAsNumber;
+        this.bufferData[3] = time * 0.001;
+        this.device.queue.writeBuffer(this.buffer, 0, this.bufferData, 0, 4);
+        this.device.queue.writeBuffer(this.teapotBuffer, 0, this.vertexData);
+        const commandEncoder = this.device.createCommandEncoder({ label: "Command encoder in renderer" });
         const renderPassDescriptor = {
             label: "Render pass in renderer",
             colorAttachments: [
                 {
                     view: this.context.getCurrentTexture().createView(),
                     clearValue: { r: 0.2, g: 0.2, b: 0.2, a: 1.0 },
-                    loadOp: 'load',
-                    storeOp: 'store'
+                    loadOp: 'clear',
+                    storeOp: 'store',
                 }
-            ]
+            ],
+            depthStencilAttachment: {
+                view: this.depthTexture.createView(),
+                depthClearValue: 1.0,
+                depthLoadOp: 'clear',
+                depthStoreOp: 'store',
+            }
         };
         const renderPass = commandEncoder.beginRenderPass(renderPassDescriptor);
         renderPass.setPipeline(this.renderPipeline);
-        if (bindGroups !== undefined) {
-            bindGroups?.forEach((bg, idx) => {
-                renderPass.setBindGroup(idx, bg);
-            });
-        }
-        renderPass.draw(3);
+        renderPass.setBindGroup(0, this.bindGroup);
+        renderPass.draw(this.vertexData.byteLength);
         renderPass.end();
         this.device.queue.submit([commandEncoder.finish()]);
-    }
+        requestAnimationFrame(this.render);
+    };
 }
 ;
 
@@ -87,7 +204,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("\r\n@vertex\r\nfn vert(@builtin(vertex_index) vertIndex: u32) -> @builtin(position) vec4f {\r\n    let pos = array(\r\n        vec2f(0.0, 0.5),\r\n        vec2f(-0.5, -0.5),\r\n        vec2f(0.5, -0.5),\r\n    );\r\n\r\n    return vec4f(pos[vertIndex], 0.0, 1.0);\r\n}\r\n\r\n@fragment\r\nfn frag() -> @location(0) vec4f {\r\n    return vec4f(1.0, 0.0, 0.0, 1.0);\r\n}\r\n");
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("struct Uniforms {\r\n    position: vec3f,\r\n    time: f32,\r\n};\r\n\r\nstruct Cube {\r\n    @builtin(position) cubeVerts: vec4f,\r\n    // @location(0) cubeColor: vec4f\r\n};\r\n\r\n@group(0) @binding(0) var<uniform> uni: Uniforms;\r\n@group(0) @binding(1) var<storage, read> cube: array<Cube>;\r\n\r\n@vertex\r\nfn vert(@builtin(vertex_index) vertIndex: u32) -> Cube {\r\n    \r\n    let rotationMatrixY = mat4x4f(\r\n        vec4f(cos(uni.time), 0, sin(uni.time), 0),\r\n        vec4f(0, 1, 0, 0),\r\n        vec4f(-sin(uni.time), 0, cos(uni.time), 0),\r\n        vec4f(0, 0, 0, 1),\r\n    );\r\n\r\n    let rotationMatrixX = mat4x4f(\r\n        vec4f(1, 0, 0, 0),\r\n        vec4f(0, cos(uni.time*2), -sin(uni.time*2), 0),\r\n        vec4f(0, sin(uni.time*2), cos(uni.time*2), 0),\r\n        vec4f(0, 0, 0, 1),\r\n    );\r\n\r\n    let perspMatrix = mat4x4f(\r\n        vec4f(1/tan(3.1415/4), 0, 0, 0),\r\n        vec4f(0, 1/tan(3.1415/4), 0, 0),\r\n        vec4f(0, 0, -600.0/599.99, -1),\r\n        vec4f(0, 0, -6/599.99, 0),\r\n    );\r\n\r\n    let offset = vec4f(uni.position, 0);\r\n\r\n    var output: Cube;\r\n    output.cubeVerts = perspMatrix * (rotationMatrixY * cube[vertIndex].cubeVerts + offset);\r\n    // output.cubeColor = cube[vertIndex].cubeColor;\r\n    return output;\r\n}\r\n\r\n@fragment\r\nfn frag(input: Cube) -> @location(0) vec4f {\r\n    // return input.cubeColor;\r\n    return vec4f(0.7, 0.7, 0.7, 1.0);\r\n}\r\n");
 
 /***/ })
 
@@ -155,37 +272,15 @@ var __webpack_exports__ = {};
   \*********************/
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _renderer__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./renderer */ "./src/renderer.ts");
+/* harmony import */ var _objParser__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./objParser */ "./src/objParser.ts");
+
 
 const canvas = document.getElementById("canvas");
 const renderer = new _renderer__WEBPACK_IMPORTED_MODULE_0__.Renderer(canvas);
-renderer.init();
-function createCircleVerts({ radius = 1, numSubdivs = 120, innerRadius = 0, startAngle = 0, endAngle = Math.PI * 2, } = {}) {
-    const numVerticies = numSubdivs * 2 * 3;
-    const vertexData = new Float32Array(numVerticies * (2 + 4)); // 2 za x i y koordinate, 4 za boje
-    let offset = 0;
-    const addVertex = (x, y, color) => {
-        vertexData[offset++] = x;
-        vertexData[offset++] = y;
-        vertexData.set([color.red, color.green, color.blue, color.alpha], offset);
-        offset += 4;
-    };
-    for (let i = 0; i < numSubdivs; i++) {
-        const angle1 = startAngle + (i + 0) * (endAngle - startAngle) / numSubdivs;
-        const angle2 = startAngle + (i + 1) * (endAngle - startAngle) / numSubdivs;
-        const c1 = Math.cos(angle1);
-        const s1 = Math.sin(angle1);
-        const c2 = Math.cos(angle2);
-        const s2 = Math.sin(angle2);
-        var col = { red: ((Math.sin(i / numSubdivs * Math.PI)) / 2) + 0.33, green: ((Math.sin(i / numSubdivs * Math.PI)) / 2) + 0.33, blue: ((Math.sin(i / numSubdivs * Math.PI)) / 2) + 0.33, alpha: 1 };
-        addVertex(c1 * radius, s1 * radius, col);
-        addVertex(c2 * radius, s2 * radius, col);
-        addVertex(c1 * innerRadius, s1 * innerRadius, col);
-        addVertex(c1 * innerRadius, s1 * innerRadius, col);
-        addVertex(c2 * radius, s2 * radius, col);
-        addVertex(c2 * innerRadius, s2 * innerRadius, col);
-    }
-    return { vertexData, numVerticies };
-}
+let text = (0,_objParser__WEBPACK_IMPORTED_MODULE_1__.loadObj)("./objects/utahTeapot.obj");
+text.then((val) => {
+    renderer.init((0,_objParser__WEBPACK_IMPORTED_MODULE_1__.parseObj)(val));
+});
 
 })();
 
