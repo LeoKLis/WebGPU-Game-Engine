@@ -4,6 +4,10 @@ import shader from "./shaders/triangle.wgsl"
 let corX = document.getElementById("cordX") as HTMLInputElement;
 let corY = document.getElementById("cordY") as HTMLInputElement;
 let corZ = document.getElementById("cordZ") as HTMLInputElement;
+let sclX = document.getElementById("sclX") as HTMLInputElement;
+let sclY = document.getElementById("sclY") as HTMLInputElement;
+let sclZ = document.getElementById("sclZ") as HTMLInputElement;
+let fov = document.getElementById("fov") as HTMLInputElement;
 
 export class Renderer {
     private canvas: HTMLCanvasElement;
@@ -11,7 +15,8 @@ export class Renderer {
     private context!: GPUCanvasContext;
     private renderPipeline!: GPURenderPipeline;
     private bindGroup!: GPUBindGroup;
-    private buffer!: GPUBuffer;
+    private bindGroupLayout!: GPUBindGroupLayout;
+    private uniformBuffer!: GPUBuffer;
     private teapotBuffer!: GPUBuffer;
     private bufferData!: Float32Array;
     private depthTexture!: GPUTexture;
@@ -32,7 +37,7 @@ export class Renderer {
             format: navigator.gpu.getPreferredCanvasFormat()
         });
 
-        const bindGroupLayout = this.device.createBindGroupLayout({
+        this.bindGroupLayout = this.device.createBindGroupLayout({
             entries: [
                 {
                     binding: 0,
@@ -52,7 +57,7 @@ export class Renderer {
         });
 
         const pipelineLayout = this.device.createPipelineLayout({
-            bindGroupLayouts: [bindGroupLayout]
+            bindGroupLayouts: [this.bindGroupLayout]
         });
 
         this.renderPipeline = this.device.createRenderPipeline({
@@ -81,9 +86,9 @@ export class Renderer {
             usage: GPUTextureUsage.RENDER_ATTACHMENT,
         })
 
-        let bufferDataLength = 4 * 4;
+        let bufferDataLength = 4 * 4 * 2;
         this.bufferData = new Float32Array(bufferDataLength);
-        this.buffer = this.device.createBuffer({
+        this.uniformBuffer = this.device.createBuffer({
             label: 'Ovaj buffer?',
             size: bufferDataLength,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
@@ -96,22 +101,70 @@ export class Renderer {
 
         this.bindGroup = this.device.createBindGroup({
             label: 'Bind group for rotating triangles',
-            layout: bindGroupLayout,
+            layout: this.bindGroupLayout,
             entries: [
-                { binding: 0, resource: { buffer: this.buffer } },
+                { binding: 0, resource: { buffer: this.uniformBuffer } },
                 { binding: 1, resource: { buffer: this.teapotBuffer } },
             ]
         });
         requestAnimationFrame(this.render)
     }
 
-    public render = (time: number) => {
-        this.bufferData[0] = corX.valueAsNumber;
-        this.bufferData[1] = corY.valueAsNumber;
-        this.bufferData[2] = corZ.valueAsNumber;
-        this.bufferData[3] = time * 0.001;
+    public loadData(vertexData: Float32Array) {
+        this.vertexData = vertexData;
 
-        this.device.queue.writeBuffer(this.buffer, 0, this.bufferData, 0, 4);
+        this.teapotBuffer = this.device.createBuffer({
+            size: this.vertexData.byteLength,
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+        })
+
+        this.bindGroup = this.device.createBindGroup({
+            label: 'Bind group for rotating triangles',
+            layout: this.bindGroupLayout,
+            entries: [
+                { binding: 0, resource: { buffer: this.uniformBuffer } },
+                { binding: 1, resource: { buffer: this.teapotBuffer } },
+            ]
+        });
+    }
+
+    public changeTexture(type: GPUPrimitiveTopology){
+        const pipelineLayout = this.device.createPipelineLayout({
+            bindGroupLayouts: [this.bindGroupLayout]
+        });
+
+        this.renderPipeline = this.device.createRenderPipeline({
+            label: "Render pipeline",
+            layout: pipelineLayout,
+            vertex: {
+                module: this.device.createShaderModule({ code: shader })
+            },
+            fragment: {
+                module: this.device.createShaderModule({ code: shader }),
+                targets: [{ format: navigator.gpu.getPreferredCanvasFormat() }]
+            },
+            depthStencil: {
+                format: 'depth24plus',
+                depthWriteEnabled: true,
+                depthCompare: 'less',
+            },
+            primitive: {
+                topology: type
+            }
+        });
+    }
+
+    public render = (time: number) => {
+        this.bufferData[0] = sclX.valueAsNumber / 100;
+        this.bufferData[1] = sclY.valueAsNumber / 100;
+        this.bufferData[2] = sclZ.valueAsNumber / 100;
+        this.bufferData[3] = fov.valueAsNumber / 10;
+        this.bufferData[4] = corX.valueAsNumber;
+        this.bufferData[5] = corY.valueAsNumber;
+        this.bufferData[6] = corZ.valueAsNumber;
+        this.bufferData[7] = time * 0.001;
+
+        this.device.queue.writeBuffer(this.uniformBuffer, 0, this.bufferData, 0, 8);
         this.device.queue.writeBuffer(this.teapotBuffer, 0, this.vertexData);
 
         const commandEncoder = this.device.createCommandEncoder({ label: "Command encoder in renderer" });

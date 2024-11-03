@@ -66,13 +66,18 @@ __webpack_require__.r(__webpack_exports__);
 let corX = document.getElementById("cordX");
 let corY = document.getElementById("cordY");
 let corZ = document.getElementById("cordZ");
+let sclX = document.getElementById("sclX");
+let sclY = document.getElementById("sclY");
+let sclZ = document.getElementById("sclZ");
+let fov = document.getElementById("fov");
 class Renderer {
     canvas;
     device;
     context;
     renderPipeline;
     bindGroup;
-    buffer;
+    bindGroupLayout;
+    uniformBuffer;
     teapotBuffer;
     bufferData;
     depthTexture;
@@ -89,7 +94,7 @@ class Renderer {
             device: this.device,
             format: navigator.gpu.getPreferredCanvasFormat()
         });
-        const bindGroupLayout = this.device.createBindGroupLayout({
+        this.bindGroupLayout = this.device.createBindGroupLayout({
             entries: [
                 {
                     binding: 0,
@@ -108,7 +113,7 @@ class Renderer {
             ]
         });
         const pipelineLayout = this.device.createPipelineLayout({
-            bindGroupLayouts: [bindGroupLayout]
+            bindGroupLayouts: [this.bindGroupLayout]
         });
         this.renderPipeline = this.device.createRenderPipeline({
             label: "Render pipeline",
@@ -134,9 +139,9 @@ class Renderer {
             format: 'depth24plus',
             usage: GPUTextureUsage.RENDER_ATTACHMENT,
         });
-        let bufferDataLength = 4 * 4;
+        let bufferDataLength = 4 * 4 * 2;
         this.bufferData = new Float32Array(bufferDataLength);
-        this.buffer = this.device.createBuffer({
+        this.uniformBuffer = this.device.createBuffer({
             label: 'Ovaj buffer?',
             size: bufferDataLength,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
@@ -147,20 +152,63 @@ class Renderer {
         });
         this.bindGroup = this.device.createBindGroup({
             label: 'Bind group for rotating triangles',
-            layout: bindGroupLayout,
+            layout: this.bindGroupLayout,
             entries: [
-                { binding: 0, resource: { buffer: this.buffer } },
+                { binding: 0, resource: { buffer: this.uniformBuffer } },
                 { binding: 1, resource: { buffer: this.teapotBuffer } },
             ]
         });
         requestAnimationFrame(this.render);
     }
+    loadData(vertexData) {
+        this.vertexData = vertexData;
+        this.teapotBuffer = this.device.createBuffer({
+            size: this.vertexData.byteLength,
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+        });
+        this.bindGroup = this.device.createBindGroup({
+            label: 'Bind group for rotating triangles',
+            layout: this.bindGroupLayout,
+            entries: [
+                { binding: 0, resource: { buffer: this.uniformBuffer } },
+                { binding: 1, resource: { buffer: this.teapotBuffer } },
+            ]
+        });
+    }
+    changeTexture(type) {
+        const pipelineLayout = this.device.createPipelineLayout({
+            bindGroupLayouts: [this.bindGroupLayout]
+        });
+        this.renderPipeline = this.device.createRenderPipeline({
+            label: "Render pipeline",
+            layout: pipelineLayout,
+            vertex: {
+                module: this.device.createShaderModule({ code: _shaders_triangle_wgsl__WEBPACK_IMPORTED_MODULE_0__["default"] })
+            },
+            fragment: {
+                module: this.device.createShaderModule({ code: _shaders_triangle_wgsl__WEBPACK_IMPORTED_MODULE_0__["default"] }),
+                targets: [{ format: navigator.gpu.getPreferredCanvasFormat() }]
+            },
+            depthStencil: {
+                format: 'depth24plus',
+                depthWriteEnabled: true,
+                depthCompare: 'less',
+            },
+            primitive: {
+                topology: type
+            }
+        });
+    }
     render = (time) => {
-        this.bufferData[0] = corX.valueAsNumber;
-        this.bufferData[1] = corY.valueAsNumber;
-        this.bufferData[2] = corZ.valueAsNumber;
-        this.bufferData[3] = time * 0.001;
-        this.device.queue.writeBuffer(this.buffer, 0, this.bufferData, 0, 4);
+        this.bufferData[0] = sclX.valueAsNumber / 100;
+        this.bufferData[1] = sclY.valueAsNumber / 100;
+        this.bufferData[2] = sclZ.valueAsNumber / 100;
+        this.bufferData[3] = fov.valueAsNumber / 10;
+        this.bufferData[4] = corX.valueAsNumber;
+        this.bufferData[5] = corY.valueAsNumber;
+        this.bufferData[6] = corZ.valueAsNumber;
+        this.bufferData[7] = time * 0.001;
+        this.device.queue.writeBuffer(this.uniformBuffer, 0, this.bufferData, 0, 8);
         this.device.queue.writeBuffer(this.teapotBuffer, 0, this.vertexData);
         const commandEncoder = this.device.createCommandEncoder({ label: "Command encoder in renderer" });
         const renderPassDescriptor = {
@@ -204,7 +252,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("struct Uniforms {\r\n    position: vec3f,\r\n    time: f32,\r\n};\r\n\r\nstruct Cube {\r\n    @builtin(position) cubeVerts: vec4f,\r\n    // @location(0) cubeColor: vec4f\r\n};\r\n\r\n@group(0) @binding(0) var<uniform> uni: Uniforms;\r\n@group(0) @binding(1) var<storage, read> cube: array<Cube>;\r\n\r\n@vertex\r\nfn vert(@builtin(vertex_index) vertIndex: u32) -> Cube {\r\n    \r\n    let rotationMatrixY = mat4x4f(\r\n        vec4f(cos(uni.time), 0, sin(uni.time), 0),\r\n        vec4f(0, 1, 0, 0),\r\n        vec4f(-sin(uni.time), 0, cos(uni.time), 0),\r\n        vec4f(0, 0, 0, 1),\r\n    );\r\n\r\n    let rotationMatrixX = mat4x4f(\r\n        vec4f(1, 0, 0, 0),\r\n        vec4f(0, cos(uni.time*2), -sin(uni.time*2), 0),\r\n        vec4f(0, sin(uni.time*2), cos(uni.time*2), 0),\r\n        vec4f(0, 0, 0, 1),\r\n    );\r\n\r\n    let perspMatrix = mat4x4f(\r\n        vec4f(1/tan(3.1415/4), 0, 0, 0),\r\n        vec4f(0, 1/tan(3.1415/4), 0, 0),\r\n        vec4f(0, 0, -600.0/599.99, -1),\r\n        vec4f(0, 0, -6/599.99, 0),\r\n    );\r\n\r\n    let offset = vec4f(uni.position, 0);\r\n\r\n    var output: Cube;\r\n    output.cubeVerts = perspMatrix * (rotationMatrixY * cube[vertIndex].cubeVerts + offset);\r\n    // output.cubeColor = cube[vertIndex].cubeColor;\r\n    return output;\r\n}\r\n\r\n@fragment\r\nfn frag(input: Cube) -> @location(0) vec4f {\r\n    // return input.cubeColor;\r\n    return vec4f(0.7, 0.7, 0.7, 1.0);\r\n}\r\n");
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("struct Uniforms {\r\n    scale: vec3f,\r\n    fov: f32,\r\n    position: vec3f,\r\n    time: f32,\r\n};\r\n\r\nstruct Cube {\r\n    @builtin(position) cubeVerts: vec4f,\r\n    // @location(0) cubeColor: vec4f\r\n};\r\n\r\n@group(0) @binding(0) var<uniform> uni: Uniforms;\r\n@group(0) @binding(1) var<storage, read> cube: array<Cube>;\r\n\r\n@vertex\r\nfn vert(@builtin(vertex_index) vertIndex: u32) -> Cube {\r\n\r\n    let rotationMatrixY = mat4x4f(\r\n        vec4f(cos(uni.time), 0, sin(uni.time), 0),\r\n        vec4f(0, 1, 0, 0),\r\n        vec4f(-sin(uni.time), 0, cos(uni.time), 0),\r\n        vec4f(0, 0, 0, 1),\r\n    );\r\n\r\n    let rotationMatrixX = mat4x4f(\r\n        vec4f(1, 0, 0, 0),\r\n        vec4f(0, cos(uni.time * 2), -sin(uni.time * 2), 0),\r\n        vec4f(0, sin(uni.time * 2), cos(uni.time * 2), 0),\r\n        vec4f(0, 0, 0, 1),\r\n    );\r\n\r\n    let perspMatrix = mat4x4f(\r\n        vec4f(1 / tan(3.1415 * uni.fov / 4), 0, 0, 0),\r\n        vec4f(0, 1 / tan(3.1415 * uni.fov / 4), 0, 0),\r\n        vec4f(0, 0, -600.0 / 599.99, -1),\r\n        vec4f(0, 0, -6 / 599.99, 0),\r\n    );\r\n\r\n    let scaleMatr = mat4x4f(\r\n        vec4f(uni.scale.x, 0, 0 , 0),\r\n        vec4f(0, uni.scale.y, 0 , 0),\r\n        vec4f(0, 0, uni.scale.z , 0),\r\n        vec4f(0, 0, 0 , 1),\r\n    );\r\n\r\n    let offset = vec4f(uni.position, 0);\r\n\r\n    var output: Cube;\r\n    output.cubeVerts = perspMatrix * (rotationMatrixY * scaleMatr * cube[vertIndex].cubeVerts + offset);\r\n    // output.cubeColor = cube[vertIndex].cubeColor;\r\n    return output;\r\n}\r\n\r\n@fragment\r\nfn frag(input: Cube) -> @location(0) vec4f {\r\n    // return input.cubeColor;\r\n    return vec4f(0.7, 0.7, 0.7, 1.0);\r\n}\r\n");
 
 /***/ })
 
@@ -276,10 +324,58 @@ __webpack_require__.r(__webpack_exports__);
 
 
 const canvas = document.getElementById("canvas");
+const teapot = document.getElementById("teapot");
+const cat = document.getElementById("cat");
+const triangle_list = document.getElementById("triangle-list");
+const point_list = document.getElementById("point-list");
+const line_list = document.getElementById("line-list");
 const renderer = new _renderer__WEBPACK_IMPORTED_MODULE_0__.Renderer(canvas);
 let text = (0,_objParser__WEBPACK_IMPORTED_MODULE_1__.loadObj)("./objects/utahTeapot.obj");
 text.then((val) => {
     renderer.init((0,_objParser__WEBPACK_IMPORTED_MODULE_1__.parseObj)(val));
+});
+teapot.addEventListener("click", () => {
+    if (teapot.checked) {
+        let text = (0,_objParser__WEBPACK_IMPORTED_MODULE_1__.loadObj)("./objects/utahTeapot.obj");
+        text.then((val) => {
+            renderer.loadData((0,_objParser__WEBPACK_IMPORTED_MODULE_1__.parseObj)(val));
+        });
+    }
+    else if (cat.checked) {
+        let text = (0,_objParser__WEBPACK_IMPORTED_MODULE_1__.loadObj)("./objects/cat.obj");
+        text.then((val) => {
+            renderer.loadData((0,_objParser__WEBPACK_IMPORTED_MODULE_1__.parseObj)(val));
+        });
+    }
+});
+cat.addEventListener("click", () => {
+    if (teapot.checked) {
+        let text = (0,_objParser__WEBPACK_IMPORTED_MODULE_1__.loadObj)("./objects/utahTeapot.obj");
+        text.then((val) => {
+            renderer.loadData((0,_objParser__WEBPACK_IMPORTED_MODULE_1__.parseObj)(val));
+        });
+    }
+    else if (cat.checked) {
+        let text = (0,_objParser__WEBPACK_IMPORTED_MODULE_1__.loadObj)("./objects/cat.obj");
+        text.then((val) => {
+            renderer.loadData((0,_objParser__WEBPACK_IMPORTED_MODULE_1__.parseObj)(val));
+        });
+    }
+});
+triangle_list.addEventListener("click", () => {
+    if (triangle_list.checked) {
+        renderer.changeTexture('triangle-list');
+    }
+});
+point_list.addEventListener("click", () => {
+    if (point_list.checked) {
+        renderer.changeTexture('point-list');
+    }
+});
+line_list.addEventListener("click", () => {
+    if (line_list.checked) {
+        renderer.changeTexture('line-list');
+    }
 });
 
 })();
