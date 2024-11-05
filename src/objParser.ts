@@ -11,6 +11,7 @@ export function parseObj(text: string) {
     }) - 1;    
 
     let vertexData = new Array<number>;
+    let normalsData = new Array<number>;
     lines.forEach((line) => {
         if (line.split(" ")[0] == 'f') {
             let lineElements = line.trim().split(" ").slice(1);
@@ -24,7 +25,7 @@ export function parseObj(text: string) {
                 vertexData.push(...[...data1, ...data2, ...data3]);
             }
         }
-    })
+    });
     return new Float32Array(vertexData);
 }
 
@@ -33,4 +34,10 @@ function getVertexData(line: string) {
     let output = lineElements.map((el) => parseFloat(el));
     output.push(1.0);
     return output;
+}
+
+function parseLine(lineElement: string, i: number){
+    let els = lineElement[i].split("/");
+    let v_id = parseInt(els[0]);
+    let vn_id = parseInt(els[1])
 }

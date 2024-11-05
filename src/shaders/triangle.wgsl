@@ -3,11 +3,11 @@ struct Uniforms {
     fov: f32,
     position: vec3f,
     time: f32,
+    mouseCords: vec2f,
 };
 
 struct Cube {
-    @builtin(position) cubeVerts: vec4f,
-    // @location(0) cubeColor: vec4f
+    @builtin(position) modelVerts: vec4f,
 };
 
 @group(0) @binding(0) var<uniform> uni: Uniforms;
@@ -17,9 +17,9 @@ struct Cube {
 fn vert(@builtin(vertex_index) vertIndex: u32) -> Cube {
 
     let rotationMatrixY = mat4x4f(
-        vec4f(cos(uni.time), 0, sin(uni.time), 0),
+        vec4f(cos(uni.mouseCords.y), 0, sin(uni.mouseCords.y), 0),
         vec4f(0, 1, 0, 0),
-        vec4f(-sin(uni.time), 0, cos(uni.time), 0),
+        vec4f(-sin(uni.mouseCords.y), 0, cos(uni.mouseCords.y), 0),
         vec4f(0, 0, 0, 1),
     );
 
@@ -47,7 +47,9 @@ fn vert(@builtin(vertex_index) vertIndex: u32) -> Cube {
     let offset = vec4f(uni.position, 0);
 
     var output: Cube;
-    output.cubeVerts = perspMatrix * (rotationMatrixY * scaleMatr * cube[vertIndex].cubeVerts + offset);
+    if (arrayLength(&cube) != 0) {
+        output.modelVerts = perspMatrix * (rotationMatrixY * scaleMatr * cube[vertIndex].modelVerts + offset);
+    }
     // output.cubeColor = cube[vertIndex].cubeColor;
     return output;
 }
