@@ -31,25 +31,16 @@
             left: 15px;
             color: white;
         }
+        #fps {
+            position: absolute;
+            color: white;
+            top: 15px;
+            left: 15px;
+        }
     </style>
 </head>
 <body>
-    <div id="inputs">
-        <input type="radio" name="rend" id="point-list" checked> Point list <br>
-        <input type="radio" name="rend" id="triangle-list"> Normal <br>
-        <input type="radio" name="rend" id="line-list"> Wireframe <br><br>
-
-        <input type="radio" name="obj" id="teapot" checked> Cajnik <br>
-        <input type="radio" name="obj" id="cat"> Macka <br> <br>
-
-        X <input type="range" name="cordX" id="cordX" min="-50" max="50" value="0"><br>
-        Y <input type="range" name="cordX" id="cordY" min="-100" max="100" value="0"><br>
-        Z <input type="range" name="cordX" id="cordZ" min="-300" max="0" value="-200"><br>
-        scale X <input type="range" name="sclX" id="sclX" min="-100" max="100" value="50"><br>
-        scale Y <input type="range" name="sclX" id="sclY" min="-100" max="100" value="50"><br>
-        scale Z <input type="range" name="sclX" id="sclZ" min="-100" max="100" value="50"><br>
-        fov <input type="range" name="fov" id="fov" min="-10" max="10" value="5">
-    </div>
+    <div id="fps">FPS: </div>
     <canvas id="canvas" width="800" height="800"></canvas>
     <script src="main.bundle.js"></script>
 </body>
