@@ -18,20 +18,20 @@ struct Object {
 @vertex
 fn vert(@builtin(vertex_index) vertIndex: u32) -> @builtin(position) vec4f {
     let parallGram = array(
-        vec4f(1, 0, 0, 1),
-        vec4f(0, 1, 0, 1),
-        vec4f(-1, 0, 0, 1),
-        vec4f(1, 0, 0, 1),
-        vec4f(0, 1, 0, 1),
-        vec4f(2, 1, 0, 1),
+        vec4f(1, 0, -2, 1),
+        vec4f(0, 1, -2, 1),
+        vec4f(-1, 0, -2, 1),
+        vec4f(1, 0, -2, 1),
+        vec4f(0, 1, -2, 1),
+        vec4f(2, 1, -2, 1),
     );
 
-    let yRot = mat4x4f(
-        vec4f(cos(glob.time), 0, sin(glob.time), 0),
-        vec4f(0, 1, 0, 0),
-        vec4f(-sin(glob.time), 0, cos(glob.time), 0),
-        vec4f(0, 0, 0, 1),
-    );
+    // let perspective = mat4x4f(
+    //     vec4f(1, 0, 0, 0),
+    //     vec4f(0, 1, 0, 0),
+    //     vec4f(0, 0, -1.001001, -1),
+    //     vec4f(sin(glob.time), 0, -0.1001001, 0),
+    // );
 
     let vertPos = parallGram[vertIndex];
 

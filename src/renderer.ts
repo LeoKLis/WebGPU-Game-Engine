@@ -51,7 +51,7 @@ export class Renderer {
         })
 
         this.cameraBuffer = this.device.createBuffer({
-            size: 4 * 8,
+            size: 4 * 16,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         })
 
@@ -135,8 +135,7 @@ export class Renderer {
         // Calculate perspective view
         time = time * 0.001;
         this.device.queue.writeBuffer(this.staticBuffer, 0, new Float32Array([time]), 0, 1);
-                
-        this.device.queue.writeBuffer(this.cameraBuffer, 0, camera.calculate() as Float32Array, 0, 8);
+        this.device.queue.writeBuffer(this.cameraBuffer, 0, camera.calculate() as Float32Array, 0, 16);
 
         for (let el of this.renderPassDescriptor.colorAttachments) {
             el!.view = this.context.getCurrentTexture().createView();

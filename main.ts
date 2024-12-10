@@ -1,54 +1,75 @@
 import { Camera, CameraType } from "./src/camera";
+import { InputHandler } from "./src/inputHandler";
 import { Renderer } from "./src/renderer";
-import { vec3, mat4 } from "./node_modules/wgpu-matrix/dist/2.x/wgpu-matrix";
+import { vec3, mat4 } from "wgpu-matrix";
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const fpsCounter = document.getElementById("fps") as HTMLDivElement;
 
+const inputHandler = new InputHandler(canvas);
+inputHandler.listen();
+
 let aspect = canvas.width * 1.0 / canvas.height;
-const camera = new Camera(CameraType.perspective, aspect, 60);
+const camera = new Camera(CameraType.perspective, aspect);
 
 const renderer = new Renderer(canvas);
 await renderer.initializeRenderer(camera);
 
-let keyPressed: Map<String, boolean> = new Map();
-let lastTime = 0;
-let deltaTime = 0;
 let speed = 0.003;
+let rotationSpeed = 0.00003;
+let mouseSpeed = 0.00003;
 
+let lastTime = 0;
 let render = (time: number) => {
-    fpsCounter.innerText = `FPS: ${Math.round(1 / ((time - lastTime) * 0.001))}`
-    deltaTime = time - lastTime;
-    lastTime = time;
-    if (keyPressed.get("a")) {
-        camera.position.x -= speed * deltaTime;
-        camera.move(-speed * deltaTime);
-    }
-    if (keyPressed.get("d")) {
-        camera.move(speed * deltaTime);
-    }
-    if (keyPressed.get("w")) {
-        camera.move(0, 0, speed * deltaTime);
-    }
-    if (keyPressed.get("s")) {
-        camera.move(0, 0, -speed * deltaTime);
-    }
-    if (keyPressed.get(" ")) {
-        camera.move(0, speed * deltaTime, 0);
-    }
-    if (keyPressed.get("Shift")) {
-        camera.move(0, -speed * deltaTime, 0);
-    }
+    let deltaTime = time - lastTime;
+    fpsCounter.innerText = `FPS: ${Math.round(1 / (deltaTime * 0.001))}`;
+    inputControls(deltaTime);
 
     renderer.render(camera, time);
     requestAnimationFrame(render);
+    lastTime = time;
 }
 requestAnimationFrame(render);
 
-window.addEventListener("keydown", (e) => {
-    keyPressed.set(e.key, true);
-});
+function inputControls(deltaTime: number) {
+    // Tipke
+    {
+        let keyPressed = inputHandler.getPressed();
+        if (keyPressed.get("a")) {
+            camera.move(speed * deltaTime, 0, 0);
+        }
+        if (keyPressed.get("d")) {
+            camera.move(-speed * deltaTime, 0, 0);
+        }
+        if (keyPressed.get("w")) {
+            camera.move(0, 0, speed * deltaTime);
+        }
+        if (keyPressed.get("s")) {
+            camera.move(0, 0, -speed * deltaTime);
+        }
+        if (keyPressed.get(" ")) {
+            camera.move(0, speed * deltaTime, 0);
+        }
+        if (keyPressed.get("Shift")) {
+            camera.move(0, -speed * deltaTime, 0);
+        }
+        if (keyPressed.get("ArrowRight")) {
+            camera.rotate(0, rotationSpeed * deltaTime, 0);
+        }
+        if (keyPressed.get("ArrowLeft")) {
+            camera.rotate(0, -rotationSpeed * deltaTime, 0);
+        }
+        if (keyPressed.get("ArrowUp")) {
+            camera.rotate(-rotationSpeed * deltaTime, 0, 0);
+        }
+        if (keyPressed.get("ArrowDown")) {
+            camera.rotate(rotationSpeed * deltaTime, 0, 0);
+        }
+    }
 
-window.addEventListener("keyup", (e) => {
-    keyPressed.set(e.key, false);
-});
+    // Mis
+    {
+        let mouseMove = inputHandler.getMouseMovement();
+        camera.rotate(mouseMove[1] * deltaTime * mouseSpeed, mouseMove[0] * deltaTime * mouseSpeed, 0);
+    }
+}

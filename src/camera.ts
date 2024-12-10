@@ -1,5 +1,5 @@
 import { Coords, Object } from "./object";
-import { vec3, mat4 } from "../node_modules/wgpu-matrix/dist/2.x/wgpu-matrix";
+import { vec3, mat4, Mat4 } from "wgpu-matrix";
 
 export enum CameraType {
     perspective,
@@ -15,11 +15,11 @@ export class Camera implements Object {
     public far: number;
     public aspectRatio: number;
 
-    public projectionMatrix = mat4.identity();
-    public positionMatrix = mat4.identity();
-    public rotationMatrix = mat4.identity();
+    public projectionMatrix: Mat4;
+    public positionMatrix: Mat4;
+    public rotationMatrix: Mat4;
     
-    constructor(type: CameraType, aspectRatio: number, fov?: number, near?: number, far?: number) {
+    constructor(type: CameraType, aspectRatio: number, fov = Math.PI/2, near = 0.1, far = 100) {
         this.position = {
             x: 0.0,
             y: 0.0,
@@ -31,19 +31,28 @@ export class Camera implements Object {
             z: 0.0,
         };        
         this.type = type;
-        this.fov = fov === undefined ? 90 * Math.PI / 180 : fov * Math.PI / 180;
-        this.near = near === undefined ? 0.1 : near;
-        this.far = far === undefined ? 50 : far;
+        this.fov = fov;
+        this.near = near;
+        this.far = far;
         this.aspectRatio = aspectRatio;
 
         this.projectionMatrix = mat4.perspective(this.fov, this.aspectRatio, this.near, this.far);
+        this.rotationMatrix = mat4.identity();
+        this.positionMatrix = mat4.identity();
     }
 
     public move(x = 0.0, y = 0.0, z = 0.0){
+        this.position.x += x;
+        this.position.y += y;
+        this.position.z += z;
         mat4.translate(this.positionMatrix, [x, y, z], this.positionMatrix);
     }
 
     public rotate(degreesX = 0.0, degreesY = 0.0, degreesZ = 0.0){
+        this.orientation.x = degreesX;
+        this.orientation.y = degreesY;
+        this.orientation.z = degreesZ;
+
         let radiansX = degreesX * 180 / Math.PI;
         let radiansY = degreesY * 180 / Math.PI;
         let radiansZ = degreesZ * 180 / Math.PI;
@@ -54,13 +63,12 @@ export class Camera implements Object {
     }
 
     public calculate(){
-        let out = mat4.create();
-        mat4.identity(out);
-        mat4.multiply(this.rotationMatrix, out, out);
-        mat4.multiply(this.positionMatrix, out, out);
+        let out = mat4.identity();
+        mat4.multiply(this.rotationMatrix, this.positionMatrix, out);
         mat4.multiply(this.projectionMatrix, out, out);
 
         return out;
+        // return this.projectionMatrix;
     }
     // private setProjectionMatrix = () => {
     //     let tempArr = new Float32Array(16);
