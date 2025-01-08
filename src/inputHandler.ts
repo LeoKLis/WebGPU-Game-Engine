@@ -1,3 +1,5 @@
+import { rotate } from "mathjs";
+import { IObject } from "./interfaces/IObject";
 
 
 export class InputHandler {
@@ -7,11 +9,17 @@ export class InputHandler {
     private mouseDeltaX: number;
     private mouseDeltaY: number;
 
-    constructor(canvas: HTMLCanvasElement) {
+    private moveSpeed: number;
+    private rotateSpeed: number;
+
+    constructor(canvas: HTMLCanvasElement, moveSpeed: number, rotateSpeed: number) {
         this.canvas = canvas;
         this.keyPressed = new Map();
         this.mouseDeltaX = 0;
         this.mouseDeltaY = 0;
+        this.moveSpeed = moveSpeed;
+        this.rotateSpeed = rotateSpeed;
+        this.listen();
     }
 
     public listen = () => {
@@ -31,7 +39,7 @@ export class InputHandler {
             mouseDown = false;
         });
         this.canvas.addEventListener('pointermove', (e) => {
-            if(mouseDown){
+            if (mouseDown) {
                 this.mouseDeltaX += e.movementX;
                 this.mouseDeltaY += e.movementY;
             }
@@ -47,5 +55,48 @@ export class InputHandler {
         this.mouseDeltaX = 0;
         this.mouseDeltaY = 0;
         return output;
+    }
+
+    public defaultInputControls = (object: IObject, deltaTime: number) => {
+        // Tipke
+        {
+            let keyPressed = this.getPressed();
+            if (keyPressed.get("a")) {
+                object.move(this.moveSpeed * deltaTime, 0, 0);
+            }
+            if (keyPressed.get("d")) {
+                object.move(-this.moveSpeed * deltaTime, 0, 0);
+            }
+            if (keyPressed.get("w")) {
+                object.move(0, 0, this.moveSpeed * deltaTime);
+            }
+            if (keyPressed.get("s")) {
+                object.move(0, 0, -this.moveSpeed * deltaTime);
+            }
+            if (keyPressed.get(" ")) {
+                object.move(0, this.moveSpeed * deltaTime, 0);
+            }
+            if (keyPressed.get("Shift")) {
+                object.move(0, -this.moveSpeed * deltaTime, 0);
+            }
+            if (keyPressed.get("ArrowRight")) {
+                object.rotate(0, -this.rotateSpeed * deltaTime, 0);
+            }
+            if (keyPressed.get("ArrowLeft")) {
+                object.rotate(0, this.rotateSpeed * deltaTime, 0);
+            }
+            if (keyPressed.get("ArrowUp")) {
+                object.rotate(this.rotateSpeed * deltaTime, 0, 0);
+            }
+            if (keyPressed.get("ArrowDown")) {
+                object.rotate(-this.rotateSpeed * deltaTime, 0, 0);
+            }
+        }
+
+        // Mis
+        {
+            let mouseMove = this.getMouseMovement();
+            object.rotate(mouseMove[1] * deltaTime * this.rotateSpeed, mouseMove[0] * deltaTime * this.rotateSpeed, 0);
+        }
     }
 }

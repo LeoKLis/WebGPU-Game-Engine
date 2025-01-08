@@ -1,75 +1,38 @@
+import { typeOf } from "mathjs";
 import { Camera, CameraType } from "./src/camera";
 import { InputHandler } from "./src/inputHandler";
 import { Renderer } from "./src/renderer";
-import { vec3, mat4 } from "wgpu-matrix";
+import { Scene } from "./src/scene";
+import { Cube } from "./src/shapes/cube";
+import objectHash from "object-hash";
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-const fpsCounter = document.getElementById("fps") as HTMLDivElement;
 
-const inputHandler = new InputHandler(canvas);
-inputHandler.listen();
+const inputHandler = new InputHandler(canvas, 0.003, 0.000006);
 
-let aspect = canvas.width * 1.0 / canvas.height;
-const camera = new Camera(CameraType.perspective, aspect);
+const camera = new Camera(CameraType.perspective, canvas.width * 1.0 / canvas.height);
+camera.active = true;
 
 const renderer = new Renderer(canvas);
 await renderer.initializeRenderer(camera);
 
-let speed = 0.003;
-let rotationSpeed = 0.00003;
-let mouseSpeed = 0.00003;
+const scene = new Scene(camera);
+
+const cube = new Cube("Kocka", [0, 0, 0], [0, 0, 0], [1, 1, 1]);
+
+scene.add(cube);
+
+scene.container.forEach((el) => console.log(objectHash(el), el.name));
+
 
 let lastTime = 0;
 let render = (time: number) => {
     let deltaTime = time - lastTime;
-    fpsCounter.innerText = `FPS: ${Math.round(1 / (deltaTime * 0.001))}`;
-    inputControls(deltaTime);
-
-    renderer.render(camera, time);
-    requestAnimationFrame(render);
     lastTime = time;
+    
+    inputHandler.defaultInputControls(camera, deltaTime);
+
+    renderer.render(scene, time);
+    requestAnimationFrame(render);
 }
 requestAnimationFrame(render);
-
-function inputControls(deltaTime: number) {
-    // Tipke
-    {
-        let keyPressed = inputHandler.getPressed();
-        if (keyPressed.get("a")) {
-            camera.move(speed * deltaTime, 0, 0);
-        }
-        if (keyPressed.get("d")) {
-            camera.move(-speed * deltaTime, 0, 0);
-        }
-        if (keyPressed.get("w")) {
-            camera.move(0, 0, speed * deltaTime);
-        }
-        if (keyPressed.get("s")) {
-            camera.move(0, 0, -speed * deltaTime);
-        }
-        if (keyPressed.get(" ")) {
-            camera.move(0, speed * deltaTime, 0);
-        }
-        if (keyPressed.get("Shift")) {
-            camera.move(0, -speed * deltaTime, 0);
-        }
-        if (keyPressed.get("ArrowRight")) {
-            camera.rotate(0, rotationSpeed * deltaTime, 0);
-        }
-        if (keyPressed.get("ArrowLeft")) {
-            camera.rotate(0, -rotationSpeed * deltaTime, 0);
-        }
-        if (keyPressed.get("ArrowUp")) {
-            camera.rotate(-rotationSpeed * deltaTime, 0, 0);
-        }
-        if (keyPressed.get("ArrowDown")) {
-            camera.rotate(rotationSpeed * deltaTime, 0, 0);
-        }
-    }
-
-    // Mis
-    {
-        let mouseMove = inputHandler.getMouseMovement();
-        camera.rotate(mouseMove[1] * deltaTime * mouseSpeed, mouseMove[0] * deltaTime * mouseSpeed, 0);
-    }
-}

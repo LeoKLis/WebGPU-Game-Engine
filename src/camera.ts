@@ -1,13 +1,21 @@
-import { Coords, Object } from "./object";
-import { vec3, mat4, Mat4 } from "wgpu-matrix";
+import { IObject } from "./interfaces/IObject";
+import { vec3, mat4, Mat4, Vec3, Vec4 } from "wgpu-matrix";
 
 export enum CameraType {
     perspective,
 }
 
-export class Camera implements Object {
-    public position: Coords;
-    public orientation: Coords;
+export class Camera implements IObject{
+    public name: string;
+    public position = vec3.create(0, 0, -5);
+    public orientation = vec3.create(0, 0, 0);
+    // public front: Vec3;
+    public right: Vec3;
+    public up: Vec3;
+    public back: Vec3;
+
+    public yaw = 0;
+    public pitch = 0;
 
     public type: CameraType;
     public fov: number;
@@ -18,18 +26,11 @@ export class Camera implements Object {
     public projectionMatrix: Mat4;
     public positionMatrix: Mat4;
     public rotationMatrix: Mat4;
+
+    public active: boolean;
     
-    constructor(type: CameraType, aspectRatio: number, fov = Math.PI/2, near = 0.1, far = 100) {
-        this.position = {
-            x: 0.0,
-            y: 0.0,
-            z: -3.0,
-        };
-        this.orientation = {
-            x: 0.0,
-            y: 0.0,
-            z: 0.0,
-        };        
+    constructor(type: CameraType, aspectRatio: number, fov = Math.PI/3, near = 0.1, far = 100) {      
+        this.name = "camera";
         this.type = type;
         this.fov = fov;
         this.near = near;
@@ -38,45 +39,52 @@ export class Camera implements Object {
 
         this.projectionMatrix = mat4.perspective(this.fov, this.aspectRatio, this.near, this.far);
         this.rotationMatrix = mat4.identity();
-        this.positionMatrix = mat4.identity();
+        this.positionMatrix = mat4.translate(mat4.identity(), this.position);
+
+        this.right = new Float32Array(this.rotationMatrix.buffer, 4 * 0, 3);
+        this.up = new Float32Array(this.rotationMatrix.buffer, 4 * 4, 3);
+        this.back = new Float32Array(this.rotationMatrix.buffer, 4 * 8, 3);
+        this.recalcAngles(this.back);
+        this.active = false;
     }
 
     public move(x = 0.0, y = 0.0, z = 0.0){
-        this.position.x += x;
-        this.position.y += y;
-        this.position.z += z;
-        mat4.translate(this.positionMatrix, [x, y, z], this.positionMatrix);
+        let movement = vec3.create(0, 0, 0);
+        movement = vec3.addScaled(movement, this.right, x);
+        movement = vec3.addScaled(movement, this.up, y);
+        movement = vec3.addScaled(movement, this.back, z);        
+        
+        mat4.translate(this.positionMatrix, movement, this.positionMatrix);
     }
 
     public rotate(degreesX = 0.0, degreesY = 0.0, degreesZ = 0.0){
-        this.orientation.x = degreesX;
-        this.orientation.y = degreesY;
-        this.orientation.z = degreesZ;
-
         let radiansX = degreesX * 180 / Math.PI;
         let radiansY = degreesY * 180 / Math.PI;
-        let radiansZ = degreesZ * 180 / Math.PI;
 
-        mat4.rotateX(this.rotationMatrix, radiansX, this.rotationMatrix);
-        mat4.rotateY(this.rotationMatrix, radiansY, this.rotationMatrix);
-        mat4.rotateZ(this.rotationMatrix, radiansZ, this.rotationMatrix);
+        this.yaw += radiansY;
+        this.pitch += radiansX;
+
+        mat4.rotateX(mat4.rotationY(this.yaw), this.pitch, this.rotationMatrix);
     }
 
-    public calculate(){
-        let out = mat4.identity();
-        mat4.multiply(this.rotationMatrix, this.positionMatrix, out);
-        mat4.multiply(this.projectionMatrix, out, out);
-
-        return out;
-        // return this.projectionMatrix;
+    public recalcAngles(vec: Vec3){
+        this.yaw = Math.atan2(vec[0], vec[2]);
+        this.pitch = -Math.asin(vec[1]);
     }
-    // private setProjectionMatrix = () => {
-    //     let tempArr = new Float32Array(16);
-    //     tempArr[0] = 1.0 / (this.aspectRatio * Math.tan(this.fov / 2));
-    //     tempArr[5] = 1.0 / Math.tan(this.fov / 2);
-    //     tempArr[10] = this.far / (this.far - this.near);
-    //     tempArr[14] = 1;
-    //     tempArr[11] = -this.far * this.near / (this.far - this.near);
-    //     return tempArr;
-    // }
+
+    public update(){
+        let viewMatrix = mat4.multiply(mat4.inverse(this.rotationMatrix), this.positionMatrix);
+        return mat4.multiply(this.projectionMatrix, viewMatrix);
+    }
+
+    public printMat4(matrix: Mat4) {
+        let str = "";
+        matrix.forEach((el, idx) => {
+            str += el + " ";
+            if((idx+1) % 4 == 0 && idx != 1){
+                console.log(str);
+                str = "";
+            }
+        });
+    }
 }

@@ -7,24 +7,26 @@ struct Camera {
 }
 
 struct Object {
-    position: vec4f,
-    orientation: vec4f,
-    vertexData: array<vec4f>,
+    @location(0) position: vec4f,
 }
 
 @group(0) @binding(0) var<uniform> glob: Global;
 @group(0) @binding(1) var<uniform> cam: Camera;
 
 @vertex
-fn vert(@builtin(vertex_index) vertIndex: u32) -> @builtin(position) vec4f {
+fn vert(
+    obj: Object
+) -> @builtin(position) vec4f {
+
     let parallGram = array(
-        vec4f(1, 0, -2, 1),
-        vec4f(0, 1, -2, 1),
-        vec4f(-1, 0, -2, 1),
-        vec4f(1, 0, -2, 1),
-        vec4f(0, 1, -2, 1),
-        vec4f(2, 1, -2, 1),
+        vec4f(0.6, 0, 0, 1),
+        vec4f(0, 1, 0, 1),
+        vec4f(-1, 0, 0, 1),
+        vec4f(1, 0, 0, 1),
+        vec4f(0, 1, 0, 1),
+        vec4f(1.5, 1, 0, 1),
     );
+
 
     // let perspective = mat4x4f(
     //     vec4f(1, 0, 0, 0),
@@ -33,9 +35,9 @@ fn vert(@builtin(vertex_index) vertIndex: u32) -> @builtin(position) vec4f {
     //     vec4f(sin(glob.time), 0, -0.1001001, 0),
     // );
 
-    let vertPos = parallGram[vertIndex];
+    // let vertPos = parallGram[vertIndex];
 
-    return cam.matrix * vertPos;
+    return cam.matrix * obj.position;
 }
 
 @fragment

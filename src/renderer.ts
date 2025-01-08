@@ -1,6 +1,8 @@
+import objectHash from "object-hash";
 import { Camera } from "./camera";
 import { Scene } from "./scene";
 import shader from "./shaders/shaderMain.wgsl";
+import { Cube } from "./shapes/cube";
 
 export class Renderer {
     private canvas: HTMLCanvasElement;
@@ -15,8 +17,11 @@ export class Renderer {
     private staticBuffer!: GPUBuffer;
     private cameraBuffer!: GPUBuffer;
 
+    private objectBufferMap: Map<String, [GPUBuffer, GPUBuffer]>;
+
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
+        this.objectBufferMap = new Map<String, [GPUBuffer, GPUBuffer]>();
     }
 
     public async initializeRenderer(camera: Camera) {
@@ -117,6 +122,14 @@ export class Renderer {
             layout: pipelineLayout,
             vertex: {
                 module: module,
+                buffers: [
+                    {
+                        arrayStride: 4 * 4,
+                        attributes: [
+                            {shaderLocation: 0, offset: 0, format: 'float32x4'}
+                        ]
+                    }
+                ]
             },
             fragment: {
                 module: module,
@@ -131,11 +144,11 @@ export class Renderer {
         return renderPipelineDescriptor;
     }
 
-    public render = (camera: Camera, time: number, scene?: Scene) => {
-        // Calculate perspective view
+    public render = (scene: Scene, time: number) => {
         time = time * 0.001;
         this.device.queue.writeBuffer(this.staticBuffer, 0, new Float32Array([time]), 0, 1);
-        this.device.queue.writeBuffer(this.cameraBuffer, 0, camera.calculate() as Float32Array, 0, 16);
+
+
 
         for (let el of this.renderPassDescriptor.colorAttachments) {
             el!.view = this.context.getCurrentTexture().createView();
@@ -143,10 +156,43 @@ export class Renderer {
         const encoder = this.device.createCommandEncoder({ label: 'Default encoder' });
         const renderPass = encoder.beginRenderPass(this.renderPassDescriptor);
         renderPass.setPipeline(this.renderPipeline);
-        renderPass.setBindGroup(0, this.cameraBindGroup);
-        renderPass.draw(6);
-        renderPass.end();
 
+
+        scene.container.forEach((el, id) => {
+            if (el instanceof Camera && el.active) {
+                this.device.queue.writeBuffer(this.cameraBuffer, 0, el.update(), 0, 16);
+                renderPass.setBindGroup(0, this.cameraBindGroup);
+            }
+            if (el instanceof Cube) {
+                let objVerts = el.getCubeVerticies();
+                let val = this.objectBufferMap.get(objectHash(el))!;
+                if (val === undefined) {
+                    let objBuffer = this.device.createBuffer({
+                        label: el.name,
+                        size: objVerts.cubeVertexData.byteLength,
+                        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+                    });
+                    let idxBuffer = this.device.createBuffer({
+                        label: el.name,
+                        size: objVerts.indexData.byteLength,
+                        usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
+                    });
+                    val = [objBuffer, idxBuffer];
+                    this.objectBufferMap.set(objectHash(el), [objBuffer, idxBuffer]);
+                }
+
+                this.device.queue.writeBuffer(val[0], 0, objVerts.cubeVertexData);
+                this.device.queue.writeBuffer(val[1], 0, objVerts.indexData);
+                renderPass.setVertexBuffer(0, val[0]);
+                renderPass.setIndexBuffer(val[1], 'uint16');
+                renderPass.drawIndexed(objVerts.numVerticies);
+            }
+
+        });
+
+        // renderPass.draw(3, undefined, 3);
+
+        renderPass.end();
         const commandBuffer = encoder.finish();
         this.device.queue.submit([commandBuffer]);
     }

@@ -15,16 +15,20 @@
     "@types/jquery": "^3.5.31",
     "@types/mathjs": "^9.4.1",
     "@types/node": "^22.7.7",
+    "@types/object-hash": "^3.0.6",
     "@webgpu/types": "^0.1.49",
     "css-loader": "^7.1.2",
     "jquery": "^3.7.1",
     "mathjs": "^14.0.0",
+    "npm": "^11.0.0",
+    "object-hash": "^3.0.0",
+    "q": "^2.0.3",
     "ts-loader": "^9.5.1",
     "ts-shader-loader": "^2.0.2",
     "typescript": "^5.6.3",
     "webgpu": "^0.1.16",
     "webpack": "^5.95.0",
     "webpack-cli": "^5.1.4",
-    "wgpu-matrix": "^2.9.1"
+    "wgpu-matrix": "^3.3.0"
   }
 }
