@@ -1,8 +1,9 @@
-import { Mat4, Vec3, mat4, vec3 } from "wgpu-matrix";
+import { Mat4, Vec3, Vec4, mat4, vec3, vec4 } from "wgpu-matrix";
 import { IObject } from "../interfaces/IObject";
 import { IShape } from "../interfaces/IShape"
 
 export class Cube implements IObject, IShape {
+    public id: string;
     public name: string;
     public position: Vec3;
     public orientation: Vec3;
@@ -12,7 +13,9 @@ export class Cube implements IObject, IShape {
     private rotationMatrix: Mat4;
     private scaleMatrix: Mat4;
 
-    constructor(name: string, position: [number, number, number], orientation: [number, number, number], scale: [number, number, number]) {
+    public color!: Vec4;
+
+    constructor(name: string, position: [number, number, number], orientation: [number, number, number], scale: [number, number, number], color: [number, number, number, number]) {
         this.name = name;
         this.position = vec3.create(position[0], position[1], position[2]);
         this.orientation = vec3.create(orientation[0], orientation[1], orientation[2]);
@@ -21,6 +24,11 @@ export class Cube implements IObject, IShape {
         this.positionMatrix = mat4.translate(mat4.identity(), this.position);
         this.rotationMatrix = mat4.identity();
         this.scaleMatrix = mat4.scale(mat4.identity(), scale);
+
+        this.color = vec4.create(color[0], color[1], color[2], color[3]);
+
+        let d = new Date();
+        this.id = d.getTime().toString() + this.name;
     }
 
     public move = (x: number, y: number, z: number) => {
@@ -44,36 +52,30 @@ export class Cube implements IObject, IShape {
 
     public getCubeVerticies = () => {
         const cubeVertexData = new Float32Array([
-            // front face
-            -0.5, 0.5, 0.5, 1,
-            -0.5, -0.5, 0.5, 1,
-            0.5, 0.5, 0.5, 1,
-            0.5, -0.5, 0.5, 1,
-            // right face
-            0.5, 0.5, -0.5, 1,
-            0.5, 0.5, 0.5, 1,
-            0.5, -0.5, -0.5, 1,
-            0.5, -0.5, 0.5, 1,
-            // back face
-            0.5, 0.5, -0.5, 1,
-            0.5, -0.5, -0.5, 1,
-            -0.5, 0.5, -0.5, 1,
-            -0.5, -0.5, -0.5, 1,
-            // left face
-            -0.5, 0.5, 0.5, 1,
-            -0.5, 0.5, -0.5, 1,
-            -0.5, -0.5, 0.5, 1,
-            -0.5, -0.5, -0.5, 1,
-            // bottom face
-            0.5, -0.5, 0.5, 1,
-            -0.5, -0.5, 0.5, 1,
-            0.5, -0.5, -0.5, 1,
-            -0.5, -0.5, -0.5, 1,
-            // top face
-            -0.5, 0.5, 0.5, 1,
-            0.5, 0.5, 0.5, 1,
-            -0.5, 0.5, -0.5, 1,
-            0.5, 0.5, -0.5, 1
+            -0.5, 0.5, 0.5, // front face
+            -0.5, -0.5, 0.5,
+            0.5, 0.5, 0.5,
+            0.5, -0.5, 0.5,
+            0.5, 0.5, -0.5, // right f
+            0.5, 0.5, 0.5,
+            0.5, -0.5, -0.5,
+            0.5, -0.5, 0.5,
+            0.5, 0.5, -0.5, // back f
+            0.5, -0.5, -0.5,
+            -0.5, 0.5, -0.5,
+            -0.5, -0.5, -0.5,
+            -0.5, 0.5, 0.5, // left f
+            -0.5, 0.5, -0.5,
+            -0.5, -0.5, 0.5,
+            -0.5, -0.5, -0.5,
+            0.5, -0.5, 0.5, // bottom f
+            -0.5, -0.5, 0.5,
+            0.5, -0.5, -0.5,
+            -0.5, -0.5, -0.5,
+            -0.5, 0.5, 0.5, // top f
+            0.5, 0.5, 0.5,
+            -0.5, 0.5, -0.5,
+            0.5, 0.5, -0.5
         ]);
 
         let outMat = mat4.multiply(mat4.multiply(this.positionMatrix, this.rotationMatrix), this.scaleMatrix);
@@ -88,7 +90,7 @@ export class Cube implements IObject, IShape {
         ]);
 
         return {
-            cubeVertexData, outMat, indexData, numVerticies: indexData.length,
+            cubeVertexData, outMat, indexData, numVerticies: indexData.length, color: this.color.buffer, 
         };
     }
 

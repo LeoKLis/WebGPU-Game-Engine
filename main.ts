@@ -1,10 +1,8 @@
-import { typeOf } from "mathjs";
 import { Camera, CameraType } from "./src/camera";
 import { InputHandler } from "./src/inputHandler";
 import { Renderer } from "./src/renderer";
 import { Scene } from "./src/scene";
 import { Cube } from "./src/shapes/cube";
-import objectHash from "object-hash";
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 
@@ -14,22 +12,21 @@ const camera = new Camera(CameraType.perspective, canvas.width * 1.0 / canvas.he
 camera.active = true;
 
 const renderer = new Renderer(canvas);
-await renderer.initializeRenderer(camera);
+await renderer.initializeRenderer();
 
 const scene = new Scene(camera);
 
-const cube = new Cube("Kocka", [0, 0, 0], [0, 0, 0], [1, 1, 1]);
+const cube = new Cube("Kocka", [1, 0, 0], [0, 0, 0], [1, 1, 1], [0.8, 0.5, 0.2, 1]); // Narancasta kocka desno
+const cube2 = new Cube("KockaDruga", [-1, 0, 0], [0, 0, 0], [1, 1, 1], [0.2, 0.5, 0.8, 1]); // Plava kocka lijevo
 
+scene.add(cube2);
 scene.add(cube);
-
-scene.container.forEach((el) => console.log(objectHash(el), el.name));
-
 
 let lastTime = 0;
 let render = (time: number) => {
     let deltaTime = time - lastTime;
     lastTime = time;
-    
+    // cube2.move(0.001, 0, 0);
     inputHandler.defaultInputControls(camera, deltaTime);
 
     renderer.render(scene, time);

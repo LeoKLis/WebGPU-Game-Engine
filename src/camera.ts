@@ -6,6 +6,7 @@ export enum CameraType {
 }
 
 export class Camera implements IObject{
+    public id: string;
     public name: string;
     public position = vec3.create(0, 0, -5);
     public orientation = vec3.create(0, 0, 0);
@@ -46,6 +47,9 @@ export class Camera implements IObject{
         this.back = new Float32Array(this.rotationMatrix.buffer, 4 * 8, 3);
         this.recalcAngles(this.back);
         this.active = false;
+
+        let d = new Date();
+        this.id = d.getTime().toString() + this.name;
     }
 
     public move(x = 0.0, y = 0.0, z = 0.0){
