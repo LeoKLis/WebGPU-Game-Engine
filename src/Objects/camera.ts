@@ -1,4 +1,4 @@
-import { IObject } from "./interfaces/IObject";
+import { IObject } from "../interfaces/IObject";
 import { vec3, mat4, Mat4, Vec3, Vec4 } from "wgpu-matrix";
 
 export enum CameraType {
@@ -30,7 +30,7 @@ export class Camera implements IObject{
 
     public active: boolean;
     
-    constructor(type: CameraType, aspectRatio: number, fov = Math.PI/3, near = 0.1, far = 100) {      
+    constructor(type: CameraType, aspectRatio: number, fov = Math.PI/3, near = 0.1, far = 100, active = false) {      
         this.name = "camera";
         this.type = type;
         this.fov = fov;
@@ -46,7 +46,7 @@ export class Camera implements IObject{
         this.up = new Float32Array(this.rotationMatrix.buffer, 4 * 4, 3);
         this.back = new Float32Array(this.rotationMatrix.buffer, 4 * 8, 3);
         this.recalcAngles(this.back);
-        this.active = false;
+        this.active = active;
 
         let d = new Date();
         this.id = d.getTime().toString() + this.name;

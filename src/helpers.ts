@@ -6,13 +6,17 @@ export const createBuffer = (device: GPUDevice, size: number, usage: number) => 
     return outBuf;
 }
 
-export const createBindGroup = (device: GPUDevice, layout: GPUBindGroupLayout, entries: Array<GPUBuffer>) => {
+export const createBindGroup = (device: GPUDevice, layout: GPUBindGroupLayout, entries: Array<{buffer: GPUBuffer, size: number}>) => {
     let outBg = device.createBindGroup({
         layout: layout,
-        entries: entries.map((el, id) => {
+        entries: entries.map((el, id) => {            
             return {
                 binding: id,
-                resource: { buffer: el }
+                resource: { 
+                    buffer: el.buffer,
+                    offset: 0,
+                    size: el.size
+                }
             }
         }) 
     });
@@ -25,6 +29,7 @@ export const createRenderPipelineDescriptor = (
     presentationFormat: GPUTextureFormat,
     bindGroupLayouts: Array<GPUBindGroupLayout>,
     vertexBufferLayouts: Array<GPUVertexBufferLayout>,
+    multisampled: boolean,
 ) => {
     const modul = device.createShaderModule({ code: shader });
     const pipelineLayout = device.createPipelineLayout({
@@ -45,6 +50,9 @@ export const createRenderPipelineDescriptor = (
             format: 'depth24plus',
             depthWriteEnabled: true,
             depthCompare: 'less',
+        },
+        multisample: {
+            count: multisampled ? 4 : 1,
         }
     }
     return renderPipelineDescriptor;
@@ -52,14 +60,14 @@ export const createRenderPipelineDescriptor = (
 
 export const createBindGroupLayout = (
     device: GPUDevice,
-    entries: Array<{visibility: number, bufferType: GPUBufferBindingType}>,
+    entries: Array<{visibility: number, bufferType: GPUBufferBindingType, hasDynamicOffset: boolean}>,
 ) => {
     const bindGroupLayoutDescriptor: GPUBindGroupLayoutDescriptor = {
         entries: entries.map((el, id) => {
             return {
                 binding: id,
                 visibility: el.visibility,
-                buffer: { type: el.bufferType }
+                buffer: { type: el.bufferType, hasDynamicOffset: el.hasDynamicOffset }
             }
         })
     }
@@ -70,12 +78,14 @@ export const createTexture = (
     device: GPUDevice,
     context: GPUCanvasContext,
     format: GPUTextureFormat,
-    usage: number
+    usage: number,
+    multisampled: boolean,
 ) => {
     const outTex = device.createTexture({
         size: [context.getCurrentTexture().width, context.getCurrentTexture().height],
         format: format,
-        usage: usage
+        usage: usage,
+        sampleCount: multisampled ? 4 : 1,
     });
     return outTex;
 }
@@ -98,7 +108,7 @@ export const setRenderPassDescriptor = (
             view: depthTexture.createView(),
             depthClearValue: 1.0,
             depthLoadOp: 'clear',
-            depthStoreOp: 'discard'
+            depthStoreOp: 'discard',
         }
     } as GPURenderPassDescriptor;
     return outRPD;

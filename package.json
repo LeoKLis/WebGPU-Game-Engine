@@ -12,6 +12,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@loaders.gl/core": "^4.3.3",
+    "@loaders.gl/obj": "^4.3.3",
     "@types/jquery": "^3.5.31",
     "@types/mathjs": "^9.4.1",
     "@types/node": "^22.7.7",
