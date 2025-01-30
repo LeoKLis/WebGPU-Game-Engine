@@ -4,99 +4,118 @@ import { IObject } from "./interfaces/IObject";
 
 export class InputHandler {
     private canvas: HTMLCanvasElement;
-    private keyPressed: Map<String, boolean>;
+    private keysPressed: Map<String, boolean>;
 
     private mouseDeltaX: number;
     private mouseDeltaY: number;
+    private mouseScrollDelta: number;
 
     private moveSpeed: number;
     private rotateSpeed: number;
 
+    private leftMouseDown: boolean;
+    private middleMouseDown: boolean;
+    private rightMouseDown: boolean;
+
     constructor(canvas: HTMLCanvasElement, moveSpeed: number, rotateSpeed: number) {
         this.canvas = canvas;
-        this.keyPressed = new Map();
+        this.keysPressed = new Map();
+
         this.mouseDeltaX = 0;
         this.mouseDeltaY = 0;
-        this.moveSpeed = moveSpeed;
-        this.rotateSpeed = rotateSpeed;
+        this.mouseScrollDelta = 0;
+
+        this.moveSpeed = moveSpeed / 1000;
+        this.rotateSpeed = rotateSpeed / 1000;
+        this.leftMouseDown = false;
+        this.middleMouseDown = false;
+        this.rightMouseDown = false;
         this.listen();
     }
 
     public listen = () => {
-        window.addEventListener("keydown", (e) => {
-            this.keyPressed.set(e.key, true);
-        });
-        window.addEventListener("keyup", (e) => {
-            this.keyPressed.set(e.key, false);
-        });
+        this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
-        let mouseDown: boolean;
+        window.addEventListener("keydown", (e) => this.keysPressed.set(e.key, true));
+        window.addEventListener("keyup", (e) => this.keysPressed.set(e.key, false));
+
         this.canvas.style.touchAction = 'pinch-zoom';
-        this.canvas.addEventListener('pointerdown', () => {
-            mouseDown = true;
+        this.canvas.addEventListener('mousedown', (e) => {
+            switch (e.button) {
+                case 0:
+                    this.leftMouseDown = true;
+                    break;
+                case 1:
+                    this.middleMouseDown = true;
+                    break;
+                case 2:
+                    this.rightMouseDown = true;
+                    break;
+            }
         });
-        this.canvas.addEventListener('pointerup', () => {
-            mouseDown = false;
+        this.canvas.addEventListener('mouseup', (e) => {
+            switch (e.button) {
+                case 0:
+                    this.leftMouseDown = false;
+                case 1:
+                    this.middleMouseDown = false;
+                case 2:
+                    this.rightMouseDown = false;
+            }
         });
         this.canvas.addEventListener('pointermove', (e) => {
-            if (mouseDown) {
+            if (this.leftMouseDown || this.middleMouseDown || this.rightMouseDown) {
                 this.mouseDeltaX += e.movementX;
                 this.mouseDeltaY += e.movementY;
             }
         });
+        this.canvas.addEventListener('wheel', (e) => {
+            this.mouseScrollDelta += e.deltaY;
+        })
     }
 
-    public getPressed = () => {
-        return this.keyPressed;
+    public getKeysPressed = () => {
+        return this.keysPressed;
     }
 
     public getMouseMovement = () => {
-        let output = [this.mouseDeltaX, this.mouseDeltaY]
+        let output = [this.mouseDeltaX, this.mouseDeltaY, this.mouseScrollDelta]
         this.mouseDeltaX = 0;
         this.mouseDeltaY = 0;
+        this.mouseScrollDelta = 0;
         return output;
     }
 
     public defaultInputControls = (object: IObject, deltaTime: number) => {
-        // Tipke
-        {
-            let keyPressed = this.getPressed();
-            if (keyPressed.get("a")) {
-                object.move(this.moveSpeed * deltaTime, 0, 0);
-            }
-            if (keyPressed.get("d")) {
-                object.move(-this.moveSpeed * deltaTime, 0, 0);
-            }
-            if (keyPressed.get("w")) {
-                object.move(0, 0, this.moveSpeed * deltaTime);
-            }
-            if (keyPressed.get("s")) {
-                object.move(0, 0, -this.moveSpeed * deltaTime);
-            }
-            if (keyPressed.get(" ")) {
-                object.move(0, this.moveSpeed * deltaTime, 0);
-            }
-            if (keyPressed.get("Shift")) {
-                object.move(0, -this.moveSpeed * deltaTime, 0);
-            }
-            if (keyPressed.get("ArrowRight")) {
-                object.rotate(0, -this.rotateSpeed * deltaTime, 0);
-            }
-            if (keyPressed.get("ArrowLeft")) {
-                object.rotate(0, this.rotateSpeed * deltaTime, 0);
-            }
-            if (keyPressed.get("ArrowUp")) {
-                object.rotate(this.rotateSpeed * deltaTime, 0, 0);
-            }
-            if (keyPressed.get("ArrowDown")) {
-                object.rotate(-this.rotateSpeed * deltaTime, 0, 0);
-            }
-        }
+        let keyPressed = this.getKeysPressed();
+        keyPressed.forEach((val, key) => {
+            if (!val) return;
+            switch (key) {
+                case 'a':
+                    object.move(this.moveSpeed * deltaTime, 0, 0);
+                    break;
+                case 'd':
+                    object.move(-this.moveSpeed * deltaTime, 0, 0);
+                    break;
+                case 'w':
+                    object.move(0, 0, this.moveSpeed * deltaTime);
+                    break;
+                case 's':
+                    object.move(0, 0, -this.moveSpeed * deltaTime);
+                    break;
 
-        // Mis
-        {
-            let mouseMove = this.getMouseMovement();
-            object.rotate(mouseMove[1] * deltaTime * this.rotateSpeed, mouseMove[0] * deltaTime * this.rotateSpeed, 0);
+            }
+        })
+
+        let mouseMove = this.getMouseMovement();
+        if (this.leftMouseDown) {
+            object.move(mouseMove[0] * deltaTime * this.moveSpeed, mouseMove[1] * deltaTime * -this.moveSpeed, 0);
         }
+        else if (this.rightMouseDown) {
+            object.rotate(mouseMove[1] * deltaTime * this.rotateSpeed, mouseMove[0] * deltaTime * this.rotateSpeed, 0);
+        } 
+        else if (this.middleMouseDown) {
+        }
+        object.move(0, 0, mouseMove[2] * deltaTime * -this.moveSpeed);
     }
 }

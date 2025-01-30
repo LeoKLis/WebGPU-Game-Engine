@@ -19,8 +19,8 @@ export class Renderer {
     private renderTarget!: GPUTexture;
     private renderTargetView!: GPUTextureView;
 
-    public cameraBindGroup!: GPUBindGroup;
-    public objectBindGroup!: GPUBindGroup;
+    private cameraBindGroup!: GPUBindGroup;
+    private objectBindGroup!: GPUBindGroup;
 
     private cameraBuffer!: GPUBuffer;
     private lightBuffer!: GPUBuffer;

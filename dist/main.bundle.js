@@ -27,7 +27,7 @@ __webpack_require__.r(__webpack_exports__);
 const canvas = document.getElementById("canvas");
 const renderer = new _src_renderer__WEBPACK_IMPORTED_MODULE_2__.Renderer(canvas);
 await renderer.initializeRenderer();
-const inputHandler = new _src_inputHandler__WEBPACK_IMPORTED_MODULE_1__.InputHandler(canvas, 0.003, 0.000006);
+const inputHandler = new _src_inputHandler__WEBPACK_IMPORTED_MODULE_1__.InputHandler(canvas, 0.3, 0.002);
 const scene = new _src_scene__WEBPACK_IMPORTED_MODULE_3__.Scene();
 const camera = new _src_Objects_camera__WEBPACK_IMPORTED_MODULE_0__.Camera(_src_Objects_camera__WEBPACK_IMPORTED_MODULE_0__.CameraType.perspective, canvas.width / canvas.height, undefined, undefined, undefined, true);
 const cube = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube("Kocka", [2, 0, 0], [0, 0, 0], [1, 1, 1], [0.8, 0.5, 0.2, 1]); // Narancasta kocka desno
@@ -35,11 +35,10 @@ const cube1 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube("Ko
 // const cube2 = new Cube("KockaTreca", [0, 0, 0], [0, 0, 0], [1, 1, 1], [0.2, 0.8, 0.6, 1]); // Plava kocka lijevo
 const model = new _src_Objects_model__WEBPACK_IMPORTED_MODULE_6__.Model("Cajnik", [0, 0, 0], [0, 0, 0], [0.01, 0.01, 0.01], [0.2, 0.8, 0.6, 1]);
 model.loadDataFromFile("dist/objects/utahTeapot.obj");
-// const model2 = new Model("Macka", [1, 0, 1], [0, 0, 0], [0.01, 0.01, 0.01], [0.9, 0.5, 0.3, 1]);
-// model2.loadDataFromFile("dist/objects/cat.obj");
 const light = new _src_Objects_light__WEBPACK_IMPORTED_MODULE_5__.Light("Svijetlo", [-0.5, -0.7, -1]);
 const light2 = new _src_Objects_light__WEBPACK_IMPORTED_MODULE_5__.Light("Svijetlo", [0.5, 0.7, 0.4]);
-scene.add(camera, cube, cube1, /* model, */ model, light, light2);
+scene.add(camera, cube, cube1, model, light, light2);
+addToSidebar(cube, cube1, model);
 let lastTime = 0;
 let render = (time) => {
     let deltaTime = time - lastTime;
@@ -52,6 +51,41 @@ let render = (time) => {
     requestAnimationFrame(render);
 };
 requestAnimationFrame(render);
+function addToSidebar(...objects) {
+    const HTMLSidebar = document.getElementById("sidebar");
+    objects.forEach((el) => {
+        appendObject(el, HTMLSidebar);
+    });
+}
+function appendObject(object, sidebar) {
+    const objName = document.createElement("div");
+    objName.setAttribute("class", "name");
+    objName.innerText = object.name;
+    const horizontalLine = document.createElement("hr");
+    const objPosition = document.createElement("div");
+    objPosition.setAttribute("class", "position");
+    objPosition.innerText = "Pozicija: [";
+    object.position.forEach((el) => {
+        objPosition.innerText += el.toFixed(2) + ", ";
+    });
+    objPosition.innerText = objPosition.innerText.slice(0, objPosition.innerText.length - 2);
+    objPosition.innerText += "]";
+    const objRotation = document.createElement("div");
+    objRotation.setAttribute("class", "rotation");
+    objRotation.innerText = "Rotacija: [";
+    object.orientation.forEach((el) => {
+        objRotation.innerText += el.toFixed(2) + ", ";
+    });
+    objRotation.innerText = objRotation.innerText.slice(0, objRotation.innerText.length - 2);
+    objRotation.innerText += "]";
+    const objectContainter = document.createElement("div");
+    objectContainter.setAttribute("class", "object");
+    objectContainter.append(objName);
+    objectContainter.append(horizontalLine);
+    objectContainter.append(objPosition);
+    objectContainter.append(objRotation);
+    sidebar.append(objectContainter);
+}
 
 __webpack_async_result__();
 } catch(e) { __webpack_async_result__(e); } }, 1);
@@ -80,7 +114,6 @@ class Camera {
     name;
     position = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(0, 0, -5);
     orientation = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(0, 0, 0);
-    // public front: Vec3;
     right;
     up;
     back;
@@ -135,16 +168,6 @@ class Camera {
         let viewMatrix = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.multiply(wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.inverse(this.rotationMatrix), this.positionMatrix);
         return wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.multiply(this.projectionMatrix, viewMatrix);
     }
-    printMat4(matrix) {
-        let str = "";
-        matrix.forEach((el, idx) => {
-            str += el + " ";
-            if ((idx + 1) % 4 == 0 && idx != 1) {
-                console.log(str);
-                str = "";
-            }
-        });
-    }
 }
 
 
@@ -170,7 +193,6 @@ class Light {
     yaw = 0;
     pitch = 0;
     origin = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(0, 0, 0);
-    modified = true;
     constructor(name, orientation) {
         this.name = name;
         this.position = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(0, 0, 0);
@@ -180,13 +202,11 @@ class Light {
         let d = new Date();
         this.id = d.getTime().toString() + name;
     }
-    move = (x, y, z) => {
-    };
+    move = (x, y, z) => { };
     rotate = (rotX, rotY, rotZ) => {
-        this.modified = true;
         let radX = rotX * 180 / Math.PI;
         let radY = rotY * 180 / Math.PI;
-        let radZ = rotZ * 180 / Math.PI;
+        // let radZ = rotZ * 180 / Math.PI;
         wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.rotateX(wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.rotateY(this.orientation, this.origin, radY), this.origin, radX, this.orientation);
     };
     getData = () => {
@@ -228,6 +248,7 @@ class Model {
     color;
     // private positions!: Float32Array;
     vertexData;
+    normalsData;
     indexData;
     vertexNormals;
     constructor(name, position, orientation, scale, color) {
@@ -318,7 +339,7 @@ class Cube {
     positions;
     vertexData;
     indexData;
-    vertexNormals;
+    normalsData;
     constructor(name, position, orientation, scale, color) {
         this.name = name;
         this.position = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(...position);
@@ -356,7 +377,7 @@ class Cube {
             -0.5, 0.5, -0.5,
             0.5, 0.5, -0.5
         ]);
-        this.vertexNormals = new Float32Array([
+        this.normalsData = new Float32Array([
             0, 0, 1, // Front
             1, 0, 0, // Right
             0, 0, -1, // Back
@@ -378,7 +399,7 @@ class Cube {
             const position = this.positions.slice(positionIdx, positionIdx + 3);
             this.vertexData.set(position, i * 6);
             const quadIdx = (i / 6 | 0) * 3;
-            const normal = this.vertexNormals.slice(quadIdx, quadIdx + 3);
+            const normal = this.normalsData.slice(quadIdx, quadIdx + 3);
             this.vertexData.set(normal, i * 6 + 3);
         }
     }
@@ -528,91 +549,106 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 class InputHandler {
     canvas;
-    keyPressed;
+    keysPressed;
     mouseDeltaX;
     mouseDeltaY;
+    mouseScrollDelta;
     moveSpeed;
     rotateSpeed;
+    leftMouseDown;
+    middleMouseDown;
+    rightMouseDown;
     constructor(canvas, moveSpeed, rotateSpeed) {
         this.canvas = canvas;
-        this.keyPressed = new Map();
+        this.keysPressed = new Map();
         this.mouseDeltaX = 0;
         this.mouseDeltaY = 0;
-        this.moveSpeed = moveSpeed;
-        this.rotateSpeed = rotateSpeed;
+        this.mouseScrollDelta = 0;
+        this.moveSpeed = moveSpeed / 1000;
+        this.rotateSpeed = rotateSpeed / 1000;
+        this.leftMouseDown = false;
+        this.middleMouseDown = false;
+        this.rightMouseDown = false;
         this.listen();
     }
     listen = () => {
-        window.addEventListener("keydown", (e) => {
-            this.keyPressed.set(e.key, true);
-        });
-        window.addEventListener("keyup", (e) => {
-            this.keyPressed.set(e.key, false);
-        });
-        let mouseDown;
+        this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+        window.addEventListener("keydown", (e) => this.keysPressed.set(e.key, true));
+        window.addEventListener("keyup", (e) => this.keysPressed.set(e.key, false));
         this.canvas.style.touchAction = 'pinch-zoom';
-        this.canvas.addEventListener('pointerdown', () => {
-            mouseDown = true;
+        this.canvas.addEventListener('mousedown', (e) => {
+            switch (e.button) {
+                case 0:
+                    this.leftMouseDown = true;
+                    break;
+                case 1:
+                    this.middleMouseDown = true;
+                    break;
+                case 2:
+                    this.rightMouseDown = true;
+                    break;
+            }
         });
-        this.canvas.addEventListener('pointerup', () => {
-            mouseDown = false;
+        this.canvas.addEventListener('mouseup', (e) => {
+            switch (e.button) {
+                case 0:
+                    this.leftMouseDown = false;
+                case 1:
+                    this.middleMouseDown = false;
+                case 2:
+                    this.rightMouseDown = false;
+            }
         });
         this.canvas.addEventListener('pointermove', (e) => {
-            if (mouseDown) {
+            if (this.leftMouseDown || this.middleMouseDown || this.rightMouseDown) {
                 this.mouseDeltaX += e.movementX;
                 this.mouseDeltaY += e.movementY;
             }
         });
+        this.canvas.addEventListener('wheel', (e) => {
+            this.mouseScrollDelta += e.deltaY;
+        });
     };
-    getPressed = () => {
-        return this.keyPressed;
+    getKeysPressed = () => {
+        return this.keysPressed;
     };
     getMouseMovement = () => {
-        let output = [this.mouseDeltaX, this.mouseDeltaY];
+        let output = [this.mouseDeltaX, this.mouseDeltaY, this.mouseScrollDelta];
         this.mouseDeltaX = 0;
         this.mouseDeltaY = 0;
+        this.mouseScrollDelta = 0;
         return output;
     };
     defaultInputControls = (object, deltaTime) => {
-        // Tipke
-        {
-            let keyPressed = this.getPressed();
-            if (keyPressed.get("a")) {
-                object.move(this.moveSpeed * deltaTime, 0, 0);
+        let keyPressed = this.getKeysPressed();
+        keyPressed.forEach((val, key) => {
+            if (!val)
+                return;
+            switch (key) {
+                case 'a':
+                    object.move(this.moveSpeed * deltaTime, 0, 0);
+                    break;
+                case 'd':
+                    object.move(-this.moveSpeed * deltaTime, 0, 0);
+                    break;
+                case 'w':
+                    object.move(0, 0, this.moveSpeed * deltaTime);
+                    break;
+                case 's':
+                    object.move(0, 0, -this.moveSpeed * deltaTime);
+                    break;
             }
-            if (keyPressed.get("d")) {
-                object.move(-this.moveSpeed * deltaTime, 0, 0);
-            }
-            if (keyPressed.get("w")) {
-                object.move(0, 0, this.moveSpeed * deltaTime);
-            }
-            if (keyPressed.get("s")) {
-                object.move(0, 0, -this.moveSpeed * deltaTime);
-            }
-            if (keyPressed.get(" ")) {
-                object.move(0, this.moveSpeed * deltaTime, 0);
-            }
-            if (keyPressed.get("Shift")) {
-                object.move(0, -this.moveSpeed * deltaTime, 0);
-            }
-            if (keyPressed.get("ArrowRight")) {
-                object.rotate(0, -this.rotateSpeed * deltaTime, 0);
-            }
-            if (keyPressed.get("ArrowLeft")) {
-                object.rotate(0, this.rotateSpeed * deltaTime, 0);
-            }
-            if (keyPressed.get("ArrowUp")) {
-                object.rotate(this.rotateSpeed * deltaTime, 0, 0);
-            }
-            if (keyPressed.get("ArrowDown")) {
-                object.rotate(-this.rotateSpeed * deltaTime, 0, 0);
-            }
+        });
+        let mouseMove = this.getMouseMovement();
+        if (this.leftMouseDown) {
+            object.move(mouseMove[0] * deltaTime * this.moveSpeed, mouseMove[1] * deltaTime * -this.moveSpeed, 0);
         }
-        // Mis
-        {
-            let mouseMove = this.getMouseMovement();
+        else if (this.rightMouseDown) {
             object.rotate(mouseMove[1] * deltaTime * this.rotateSpeed, mouseMove[0] * deltaTime * this.rotateSpeed, 0);
         }
+        else if (this.middleMouseDown) {
+        }
+        object.move(0, 0, mouseMove[2] * deltaTime * -this.moveSpeed);
     };
 }
 

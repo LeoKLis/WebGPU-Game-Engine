@@ -11,8 +11,6 @@ export class Light implements IObject {
     private pitch = 0;
     private origin = vec3.create(0, 0, 0);
 
-    private modified = true;
-    
     constructor(name: string, orientation: [number, number, number]){
         this.name = name;
         this.position = vec3.create(0, 0, 0);
@@ -24,16 +22,12 @@ export class Light implements IObject {
         this.id = d.getTime().toString() + name;
     }
 
-    public move = (x: number, y: number, z: number) => {
-
-    }
+    public move = (x: number, y: number, z: number) => {}
 
     public rotate = (rotX: number, rotY: number, rotZ: number) => {
-        this.modified = true;
         let radX = rotX * 180 / Math.PI;
         let radY = rotY * 180 / Math.PI;
-        let radZ = rotZ * 180 / Math.PI;
-
+        // let radZ = rotZ * 180 / Math.PI;
         vec3.rotateX(vec3.rotateY(this.orientation, this.origin, radY), this.origin, radX, this.orientation);
     };
 

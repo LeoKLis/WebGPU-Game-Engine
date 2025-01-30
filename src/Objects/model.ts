@@ -19,6 +19,7 @@ export class Model implements IObject, IShape {
     
     // private positions!: Float32Array;
     public vertexData!: Float32Array;
+    public normalsData!: Float32Array;
     public indexData!: Uint16Array;
     public vertexNormals!: Float32Array;
 

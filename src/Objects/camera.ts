@@ -10,7 +10,7 @@ export class Camera implements IObject{
     public name: string;
     public position = vec3.create(0, 0, -5);
     public orientation = vec3.create(0, 0, 0);
-    // public front: Vec3;
+
     public right: Vec3;
     public up: Vec3;
     public back: Vec3;
@@ -79,16 +79,5 @@ export class Camera implements IObject{
     public update(){
         let viewMatrix = mat4.multiply(mat4.inverse(this.rotationMatrix), this.positionMatrix);
         return mat4.multiply(this.projectionMatrix, viewMatrix);
-    }
-
-    public printMat4(matrix: Mat4) {
-        let str = "";
-        matrix.forEach((el, idx) => {
-            str += el + " ";
-            if((idx+1) % 4 == 0 && idx != 1){
-                console.log(str);
-                str = "";
-            }
-        });
     }
 }

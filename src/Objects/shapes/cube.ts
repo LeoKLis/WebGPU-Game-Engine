@@ -18,7 +18,7 @@ export class Cube implements IObject, IShape {
     private positions: Float32Array;
     public vertexData: Float32Array;
     public indexData: Uint16Array;
-    private vertexNormals: Float32Array;
+    public normalsData: Float32Array;
 
     constructor(name: string, position: [number, number, number], orientation: [number, number, number], scale: [number, number, number], color: [number, number, number, number]) {
         this.name = name;
@@ -62,7 +62,7 @@ export class Cube implements IObject, IShape {
             0.5, 0.5, -0.5
         ]);
 
-        this.vertexNormals = new Float32Array([
+        this.normalsData = new Float32Array([
             0, 0, 1, // Front
             1, 0, 0, // Right
             0, 0, -1, // Back
@@ -89,7 +89,7 @@ export class Cube implements IObject, IShape {
             this.vertexData.set(position, i * 6);
 
             const quadIdx = (i / 6 | 0) * 3;
-            const normal = this.vertexNormals.slice(quadIdx, quadIdx + 3);
+            const normal = this.normalsData.slice(quadIdx, quadIdx + 3);
             
             this.vertexData.set(normal, i * 6 + 3);
         }
