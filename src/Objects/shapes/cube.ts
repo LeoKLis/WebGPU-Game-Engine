@@ -6,7 +6,7 @@ export class Cube implements IObject, IShape {
     public id: string;
     public name: string;
     public position: Vec3;
-    public orientation: Vec3;
+    public rotation: Vec3;
     public scale: Vec3;
 
     private positionMatrix: Mat4;
@@ -20,10 +20,10 @@ export class Cube implements IObject, IShape {
     public indexData: Uint16Array;
     public normalsData: Float32Array;
 
-    constructor(name: string, position: [number, number, number], orientation: [number, number, number], scale: [number, number, number], color: [number, number, number, number]) {
+    constructor(name: string, position: [number, number, number], rotation: [number, number, number], scale: [number, number, number], color: [number, number, number, number]) {
         this.name = name;
         this.position = vec3.create(...position);
-        this.orientation = vec3.create(...orientation);
+        this.rotation = vec3.create(...rotation);
         this.scale = vec3.create(...scale);
 
         this.positionMatrix = mat4.translate(mat4.identity(), this.position);
@@ -106,9 +106,9 @@ export class Cube implements IObject, IShape {
         let radY = degY * 180 / Math.PI;
         let radZ = degZ * 180 / Math.PI;
 
-        this.orientation[0] += radY;
-        this.orientation[1] += radX;
-        mat4.rotateX(mat4.rotationY(this.orientation[0]), this.orientation[1], this.rotationMatrix);
+        this.rotation[0] += radY;
+        this.rotation[1] += radX;
+        mat4.rotateX(mat4.rotationY(this.rotation[0]), this.rotation[1], this.rotationMatrix);
     }
 
     public getData = () => {

@@ -16,8 +16,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _src_scene__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./src/scene */ "./src/scene.ts");
 /* harmony import */ var _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./src/Objects/shapes/cube */ "./src/Objects/shapes/cube.ts");
 /* harmony import */ var _src_Objects_light__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./src/Objects/light */ "./src/Objects/light.ts");
-/* harmony import */ var _src_Objects_model__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./src/Objects/model */ "./src/Objects/model.ts");
-
 
 
 
@@ -31,61 +29,17 @@ const inputHandler = new _src_inputHandler__WEBPACK_IMPORTED_MODULE_1__.InputHan
 const scene = new _src_scene__WEBPACK_IMPORTED_MODULE_3__.Scene();
 const camera = new _src_Objects_camera__WEBPACK_IMPORTED_MODULE_0__.Camera(_src_Objects_camera__WEBPACK_IMPORTED_MODULE_0__.CameraType.perspective, canvas.width / canvas.height, undefined, undefined, undefined, true);
 const cube = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube("Kocka", [2, 0, 0], [0, 0, 0], [1, 1, 1], [0.8, 0.5, 0.2, 1]); // Narancasta kocka desno
-const cube1 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube("KockaDruga", [-2, 0, 0], [0, 0, 0], [1, 1, 1], [0.2, 0.5, 0.8, 1]); // Plava kocka lijevo
-// const cube2 = new Cube("KockaTreca", [0, 0, 0], [0, 0, 0], [1, 1, 1], [0.2, 0.8, 0.6, 1]); // Plava kocka lijevo
-const model = new _src_Objects_model__WEBPACK_IMPORTED_MODULE_6__.Model("Cajnik", [0, 0, 0], [0, 0, 0], [0.01, 0.01, 0.01], [0.2, 0.8, 0.6, 1]);
-model.loadDataFromFile("dist/objects/utahTeapot.obj");
-const light = new _src_Objects_light__WEBPACK_IMPORTED_MODULE_5__.Light("Svijetlo", [-0.5, -0.7, -1]);
-const light2 = new _src_Objects_light__WEBPACK_IMPORTED_MODULE_5__.Light("Svijetlo", [0.5, 0.7, 0.4]);
-scene.add(camera, cube, cube1, model, light, light2);
-addToSidebar(cube, cube1, model);
+const light = new _src_Objects_light__WEBPACK_IMPORTED_MODULE_5__.Light("Svijetlo", [-0.4, -0.8, -1]);
+scene.add(camera, cube, light);
 let lastTime = 0;
 let render = (time) => {
     let deltaTime = time - lastTime;
     lastTime = time;
-    cube.rotate(0, 0.0001, 0);
-    // model.rotate(0, 0.0001, 0);
-    light2.rotate(0, 0.001, 0);
     inputHandler.defaultInputControls(camera, deltaTime);
     renderer.render(scene, time);
     requestAnimationFrame(render);
 };
 requestAnimationFrame(render);
-function addToSidebar(...objects) {
-    const HTMLSidebar = document.getElementById("sidebar");
-    objects.forEach((el) => {
-        appendObject(el, HTMLSidebar);
-    });
-}
-function appendObject(object, sidebar) {
-    const objName = document.createElement("div");
-    objName.setAttribute("class", "name");
-    objName.innerText = object.name;
-    const horizontalLine = document.createElement("hr");
-    const objPosition = document.createElement("div");
-    objPosition.setAttribute("class", "position");
-    objPosition.innerText = "Pozicija: [";
-    object.position.forEach((el) => {
-        objPosition.innerText += el.toFixed(2) + ", ";
-    });
-    objPosition.innerText = objPosition.innerText.slice(0, objPosition.innerText.length - 2);
-    objPosition.innerText += "]";
-    const objRotation = document.createElement("div");
-    objRotation.setAttribute("class", "rotation");
-    objRotation.innerText = "Rotacija: [";
-    object.orientation.forEach((el) => {
-        objRotation.innerText += el.toFixed(2) + ", ";
-    });
-    objRotation.innerText = objRotation.innerText.slice(0, objRotation.innerText.length - 2);
-    objRotation.innerText += "]";
-    const objectContainter = document.createElement("div");
-    objectContainter.setAttribute("class", "object");
-    objectContainter.append(objName);
-    objectContainter.append(horizontalLine);
-    objectContainter.append(objPosition);
-    objectContainter.append(objRotation);
-    sidebar.append(objectContainter);
-}
 
 __webpack_async_result__();
 } catch(e) { __webpack_async_result__(e); } }, 1);
@@ -113,7 +67,7 @@ class Camera {
     id;
     name;
     position = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(0, 0, -5);
-    orientation = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(0, 0, 0);
+    rotation = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(0, 0, 0);
     right;
     up;
     back;
@@ -189,7 +143,7 @@ class Light {
     name;
     id;
     position;
-    orientation;
+    rotation;
     yaw = 0;
     pitch = 0;
     origin = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(0, 0, 0);
@@ -197,8 +151,8 @@ class Light {
         this.name = name;
         this.position = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(0, 0, 0);
         // this.orientation = new Float32Array([orientation[0], orientation[1], orientation[2]]);
-        this.orientation = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(orientation[0], orientation[1], orientation[2]);
-        wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.normalize(this.orientation, this.orientation);
+        this.rotation = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(orientation[0], orientation[1], orientation[2]);
+        wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.normalize(this.rotation, this.rotation);
         let d = new Date();
         this.id = d.getTime().toString() + name;
     }
@@ -207,11 +161,11 @@ class Light {
         let radX = rotX * 180 / Math.PI;
         let radY = rotY * 180 / Math.PI;
         // let radZ = rotZ * 180 / Math.PI;
-        wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.rotateX(wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.rotateY(this.orientation, this.origin, radY), this.origin, radX, this.orientation);
+        wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.rotateX(wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.rotateY(this.rotation, this.origin, radY), this.origin, radX, this.rotation);
     };
     getData = () => {
         return {
-            orientation: this.orientation,
+            orientation: this.rotation,
         };
     };
 }
@@ -240,7 +194,7 @@ class Model {
     name;
     id;
     position;
-    orientation;
+    rotation;
     scale;
     positionMatrix;
     rotationMatrix;
@@ -254,7 +208,7 @@ class Model {
     constructor(name, position, orientation, scale, color) {
         this.name = name;
         this.position = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(...position);
-        this.orientation = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(...orientation);
+        this.rotation = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(...orientation);
         this.scale = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(...scale);
         this.positionMatrix = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.translate(wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.identity(), this.position);
         this.rotationMatrix = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.identity();
@@ -293,9 +247,9 @@ class Model {
         let radX = rotX * 180 / Math.PI;
         let radY = rotY * 180 / Math.PI;
         let radZ = rotZ * 180 / Math.PI;
-        this.orientation[0] += radY;
-        this.orientation[1] += radX;
-        wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.rotateX(wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.rotationY(this.orientation[0]), this.orientation[1], this.rotationMatrix);
+        this.rotation[0] += radY;
+        this.rotation[1] += radX;
+        wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.rotateX(wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.rotationY(this.rotation[0]), this.rotation[1], this.rotationMatrix);
     };
     getData = () => {
         if (this.vertexData === undefined) {
@@ -330,7 +284,7 @@ class Cube {
     id;
     name;
     position;
-    orientation;
+    rotation;
     scale;
     positionMatrix;
     rotationMatrix;
@@ -340,10 +294,10 @@ class Cube {
     vertexData;
     indexData;
     normalsData;
-    constructor(name, position, orientation, scale, color) {
+    constructor(name, position, rotation, scale, color) {
         this.name = name;
         this.position = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(...position);
-        this.orientation = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(...orientation);
+        this.rotation = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(...rotation);
         this.scale = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(...scale);
         this.positionMatrix = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.translate(wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.identity(), this.position);
         this.rotationMatrix = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.identity();
@@ -411,9 +365,9 @@ class Cube {
         let radX = degX * 180 / Math.PI;
         let radY = degY * 180 / Math.PI;
         let radZ = degZ * 180 / Math.PI;
-        this.orientation[0] += radY;
-        this.orientation[1] += radX;
-        wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.rotateX(wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.rotationY(this.orientation[0]), this.orientation[1], this.rotationMatrix);
+        this.rotation[0] += radY;
+        this.rotation[1] += radX;
+        wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.rotateX(wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.rotationY(this.rotation[0]), this.rotation[1], this.rotationMatrix);
     };
     getData = () => {
         let outMat = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.multiply(wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.multiply(this.positionMatrix, this.rotationMatrix), this.scaleMatrix);
@@ -425,114 +379,6 @@ class Cube {
         };
     };
 }
-
-
-/***/ }),
-
-/***/ "./src/helpers.ts":
-/*!************************!*\
-  !*** ./src/helpers.ts ***!
-  \************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   createBindGroup: () => (/* binding */ createBindGroup),
-/* harmony export */   createBindGroupLayout: () => (/* binding */ createBindGroupLayout),
-/* harmony export */   createBuffer: () => (/* binding */ createBuffer),
-/* harmony export */   createRenderPipelineDescriptor: () => (/* binding */ createRenderPipelineDescriptor),
-/* harmony export */   createTexture: () => (/* binding */ createTexture),
-/* harmony export */   setRenderPassDescriptor: () => (/* binding */ setRenderPassDescriptor)
-/* harmony export */ });
-const createBuffer = (device, size, usage) => {
-    let outBuf = device.createBuffer({
-        size: size,
-        usage: usage
-    });
-    return outBuf;
-};
-const createBindGroup = (device, layout, entries) => {
-    let outBg = device.createBindGroup({
-        layout: layout,
-        entries: entries.map((el, id) => {
-            return {
-                binding: id,
-                resource: {
-                    buffer: el.buffer,
-                    offset: 0,
-                    size: el.size
-                }
-            };
-        })
-    });
-    return outBg;
-};
-const createRenderPipelineDescriptor = (device, shader, presentationFormat, bindGroupLayouts, vertexBufferLayouts, multisampled) => {
-    const modul = device.createShaderModule({ code: shader });
-    const pipelineLayout = device.createPipelineLayout({
-        bindGroupLayouts: bindGroupLayouts
-    });
-    const renderPipelineDescriptor = {
-        label: 'Default render pipeline',
-        layout: pipelineLayout,
-        vertex: {
-            module: modul,
-            buffers: vertexBufferLayouts
-        },
-        fragment: {
-            module: modul,
-            targets: [{ format: presentationFormat }]
-        },
-        depthStencil: {
-            format: 'depth24plus',
-            depthWriteEnabled: true,
-            depthCompare: 'less',
-        },
-        multisample: {
-            count: multisampled ? 4 : 1,
-        }
-    };
-    return renderPipelineDescriptor;
-};
-const createBindGroupLayout = (device, entries) => {
-    const bindGroupLayoutDescriptor = {
-        entries: entries.map((el, id) => {
-            return {
-                binding: id,
-                visibility: el.visibility,
-                buffer: { type: el.bufferType, hasDynamicOffset: el.hasDynamicOffset }
-            };
-        })
-    };
-    return device.createBindGroupLayout(bindGroupLayoutDescriptor);
-};
-const createTexture = (device, context, format, usage, multisampled) => {
-    const outTex = device.createTexture({
-        size: [context.getCurrentTexture().width, context.getCurrentTexture().height],
-        format: format,
-        usage: usage,
-        sampleCount: multisampled ? 4 : 1,
-    });
-    return outTex;
-};
-const setRenderPassDescriptor = (clearValue, loadOp, storeOp, depthTexture) => {
-    const outRPD = {
-        colorAttachments: [
-            {
-                clearValue: clearValue,
-                loadOp: loadOp,
-                storeOp: storeOp
-            }
-        ],
-        depthStencilAttachment: {
-            view: depthTexture.createView(),
-            depthClearValue: 1.0,
-            depthLoadOp: 'clear',
-            depthStoreOp: 'discard',
-        }
-    };
-    return outRPD;
-};
 
 
 /***/ }),
@@ -626,16 +472,16 @@ class InputHandler {
                 return;
             switch (key) {
                 case 'a':
-                    object.move(this.moveSpeed * deltaTime, 0, 0);
+                    // object.move(this.moveSpeed * deltaTime, 0, 0);
                     break;
                 case 'd':
-                    object.move(-this.moveSpeed * deltaTime, 0, 0);
+                    // object.move(-this.moveSpeed * deltaTime, 0, 0);
                     break;
                 case 'w':
-                    object.move(0, 0, this.moveSpeed * deltaTime);
+                    // object.move(0, 0, this.moveSpeed * deltaTime);
                     break;
                 case 's':
-                    object.move(0, 0, -this.moveSpeed * deltaTime);
+                    // object.move(0, 0, -this.moveSpeed * deltaTime);
                     break;
             }
         });
@@ -668,10 +514,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _Objects_camera__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Objects/camera */ "./src/Objects/camera.ts");
 /* harmony import */ var _shaders_shaderMain_wgsl__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./shaders/shaderMain.wgsl */ "./src/shaders/shaderMain.wgsl");
 /* harmony import */ var _Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Objects/shapes/cube */ "./src/Objects/shapes/cube.ts");
-/* harmony import */ var _helpers__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./helpers */ "./src/helpers.ts");
-/* harmony import */ var _Objects_light__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./Objects/light */ "./src/Objects/light.ts");
-/* harmony import */ var _Objects_model__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./Objects/model */ "./src/Objects/model.ts");
-
+/* harmony import */ var _Objects_light__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./Objects/light */ "./src/Objects/light.ts");
+/* harmony import */ var _Objects_model__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./Objects/model */ "./src/Objects/model.ts");
 
 
 
@@ -691,7 +535,7 @@ class Renderer {
     objectBindGroup;
     cameraBuffer;
     lightBuffer;
-    objTranBuffer;
+    objTransformationBuffer;
     colorBuffer;
     isMultisampled = true;
     objectMap;
@@ -708,7 +552,7 @@ class Renderer {
         let adapter = await navigator.gpu.requestAdapter();
         this.device = await adapter.requestDevice();
         if (this.device === undefined) {
-            console.log("Couldn't load device. Exiting...");
+            console.log("Couldn't load device (not supported)");
             return;
         }
         // Configure context
@@ -722,53 +566,165 @@ class Renderer {
         this.canvas.width = this.canvas.clientWidth * window.devicePixelRatio;
         this.canvas.height = this.canvas.clientHeight * window.devicePixelRatio;
         // ========== Create bind group layouts ==========
-        const cameraBindGroupLayout = (0,_helpers__WEBPACK_IMPORTED_MODULE_3__.createBindGroupLayout)(this.device, [
-            {
-                visibility: GPUShaderStage.VERTEX,
-                bufferType: 'uniform',
-                hasDynamicOffset: false
-            },
-            {
-                visibility: GPUShaderStage.FRAGMENT,
-                bufferType: 'uniform',
-                hasDynamicOffset: false
-            }
-        ]);
-        const objectBindGroupLayout = (0,_helpers__WEBPACK_IMPORTED_MODULE_3__.createBindGroupLayout)(this.device, [
-            {
-                visibility: GPUShaderStage.VERTEX,
-                bufferType: 'uniform',
-                hasDynamicOffset: true
-            },
-            {
-                visibility: GPUShaderStage.FRAGMENT,
-                bufferType: 'uniform',
-                hasDynamicOffset: true
-            }
-        ]);
-        // Create render pipeline
-        this.renderPipeline = this.device.createRenderPipeline((0,_helpers__WEBPACK_IMPORTED_MODULE_3__.createRenderPipelineDescriptor)(this.device, _shaders_shaderMain_wgsl__WEBPACK_IMPORTED_MODULE_1__["default"], navigator.gpu.getPreferredCanvasFormat(), [cameraBindGroupLayout, objectBindGroupLayout], [
-            {
-                arrayStride: (3 + 3) * 4, // vertex (3) i normals (3)
-                attributes: [
-                    { shaderLocation: 0, offset: 0, format: 'float32x3' },
-                    { shaderLocation: 1, offset: 3 * 4, format: 'float32x3' }
+        const cameraBindGroupLayoutDescriptor = {
+            label: 'Camera bind group layout desc',
+            entries: [
+                {
+                    binding: 0,
+                    visibility: GPUShaderStage.VERTEX,
+                    buffer: {
+                        type: "uniform",
+                        hasDynamicOffset: false,
+                    },
+                },
+                {
+                    binding: 1,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    buffer: {
+                        type: "uniform",
+                        hasDynamicOffset: false,
+                    },
+                },
+            ]
+        };
+        const cameraBindGroupLayout = this.device.createBindGroupLayout(cameraBindGroupLayoutDescriptor);
+        const objectBindGroupLayoutDescriptor = {
+            entries: [
+                {
+                    binding: 0,
+                    visibility: GPUShaderStage.VERTEX,
+                    buffer: {
+                        type: 'uniform',
+                        hasDynamicOffset: true,
+                    }
+                },
+                {
+                    binding: 1,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    buffer: {
+                        type: 'uniform',
+                        hasDynamicOffset: true,
+                    }
+                },
+            ]
+        };
+        const objectBindGroupLayout = this.device.createBindGroupLayout(objectBindGroupLayoutDescriptor);
+        // ========== Create render pipeline ==========
+        const shaderModule = this.device.createShaderModule({ code: _shaders_shaderMain_wgsl__WEBPACK_IMPORTED_MODULE_1__["default"] });
+        const renderPipelineDescriptor = {
+            label: 'Default render pipeline',
+            layout: this.device.createPipelineLayout({ bindGroupLayouts: [cameraBindGroupLayout, objectBindGroupLayout] }),
+            vertex: {
+                module: shaderModule,
+                buffers: [
+                    {
+                        arrayStride: (3 + 3) * 4, // 3 vertex coords & 3 normals coords
+                        attributes: [
+                            { shaderLocation: 0, offset: 0, format: 'float32x3' },
+                            { shaderLocation: 1, offset: 3 * 4, format: 'float32x3' },
+                        ]
+                    }
                 ]
-            }
-        ], this.isMultisampled));
+            },
+            fragment: {
+                module: shaderModule,
+                targets: [{ format: this.presentationFormat }]
+            },
+            depthStencil: {
+                format: 'depth24plus',
+                depthWriteEnabled: true,
+                depthCompare: 'less',
+            },
+            multisample: {
+                count: this.isMultisampled ? 4 : 1,
+            },
+        };
+        this.renderPipeline = this.device.createRenderPipeline(renderPipelineDescriptor);
         // ========== Camera Bind Group ==========
-        this.cameraBuffer = (0,_helpers__WEBPACK_IMPORTED_MODULE_3__.createBuffer)(this.device, 16 * 4, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST);
-        this.lightBuffer = (0,_helpers__WEBPACK_IMPORTED_MODULE_3__.createBuffer)(this.device, 3 * 4 * 4, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST);
-        this.lightBuffer.label = "Svjetlo meduspremnik";
-        this.cameraBindGroup = (0,_helpers__WEBPACK_IMPORTED_MODULE_3__.createBindGroup)(this.device, this.renderPipeline.getBindGroupLayout(0), [{ buffer: this.cameraBuffer, size: 16 * 4 }, { buffer: this.lightBuffer, size: 3 * 4 * 4 }]);
+        this.cameraBuffer = this.device.createBuffer({
+            size: 4 * 4 * 4, // 4 x 4 float32 matrix
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        });
+        this.lightBuffer = this.device.createBuffer({
+            label: 'Meduspremnik za svjetlo',
+            size: 3 * 4 * 4,
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        });
+        this.cameraBindGroup = this.device.createBindGroup({
+            layout: this.renderPipeline.getBindGroupLayout(0),
+            entries: [
+                {
+                    binding: 0,
+                    resource: {
+                        buffer: this.cameraBuffer,
+                        offset: 0,
+                        size: 16 * 4,
+                    }
+                },
+                {
+                    binding: 1,
+                    resource: {
+                        buffer: this.lightBuffer,
+                        offset: 0,
+                        size: 12 * 4,
+                    }
+                },
+            ],
+        });
         // ========== Object Bind Group ==========
-        this.objTranBuffer = (0,_helpers__WEBPACK_IMPORTED_MODULE_3__.createBuffer)(this.device, 4 * 16 * 1024, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST);
-        this.colorBuffer = (0,_helpers__WEBPACK_IMPORTED_MODULE_3__.createBuffer)(this.device, 4 * 4 * 1024, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST);
-        this.objectBindGroup = (0,_helpers__WEBPACK_IMPORTED_MODULE_3__.createBindGroup)(this.device, this.renderPipeline.getBindGroupLayout(1), [{ buffer: this.objTranBuffer, size: 4 * 16 }, { buffer: this.colorBuffer, size: 4 * 4 }]);
+        this.objTransformationBuffer = this.device.createBuffer({
+            size: 4 * 16 * 1024,
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+        });
+        this.colorBuffer = this.device.createBuffer({
+            size: 4 * 4 * 1024,
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+        });
+        this.objectBindGroup = this.device.createBindGroup({
+            layout: this.renderPipeline.getBindGroupLayout(1),
+            entries: [
+                {
+                    binding: 0,
+                    resource: {
+                        buffer: this.objTransformationBuffer,
+                        offset: 0,
+                        size: 4 * 16,
+                    }
+                },
+                {
+                    binding: 1,
+                    resource: {
+                        buffer: this.colorBuffer,
+                        offset: 0,
+                        size: 4 * 4,
+                    }
+                },
+            ],
+        });
         // Prepare depth texture
-        const depthTexture = (0,_helpers__WEBPACK_IMPORTED_MODULE_3__.createTexture)(this.device, this.context, 'depth24plus', GPUTextureUsage.RENDER_ATTACHMENT, this.isMultisampled);
+        const depthTexture = this.device.createTexture({
+            size: [this.context.getCurrentTexture().width, this.context.getCurrentTexture().height],
+            format: 'depth24plus',
+            usage: GPUTextureUsage.RENDER_ATTACHMENT,
+            sampleCount: this.isMultisampled ? 4 : 1
+        });
         // Initialize and set render pass descriptor
-        this.renderPassDescriptor = (0,_helpers__WEBPACK_IMPORTED_MODULE_3__.setRenderPassDescriptor)([0.2, 0.2, 0.2, 1], 'clear', 'store', depthTexture);
+        // this.renderPassDescriptor = setRenderPassDescriptor([0.2, 0.2, 0.2, 1], 'clear', 'store', depthTexture);
+        this.renderPassDescriptor = {
+            // @ts-ignore
+            colorAttachments: [{
+                    clearValue: [0.2, 0.2, 0.2, 1],
+                    loadOp: 'clear',
+                    storeOp: 'store',
+                }
+            ],
+            depthStencilAttachment: {
+                view: depthTexture.createView(),
+                depthClearValue: 1.0,
+                depthLoadOp: 'clear',
+                depthStoreOp: 'discard',
+            }
+        };
     }
     render = (scene, time) => {
         const canvasTexture = this.context.getCurrentTexture();
@@ -786,10 +742,12 @@ class Renderer {
             });
         }
         const encoder = this.device.createCommandEncoder({ label: 'Default encoder' });
-        for (let el of this.renderPassDescriptor.colorAttachments) {
-            el.view = this.multisamlpeTexture.createView();
-            el.resolveTarget = canvasTexture.createView();
-        }
+        // for (let el of this.renderPassDescriptor.colorAttachments) {
+        //     el!.view = this.multisamlpeTexture.createView();
+        //     el!.resolveTarget = canvasTexture.createView();
+        // }
+        this.renderPassDescriptor.colorAttachments[0].view = this.multisamlpeTexture.createView();
+        this.renderPassDescriptor.colorAttachments[0].resolveTarget = canvasTexture.createView();
         const renderPass = encoder.beginRenderPass(this.renderPassDescriptor);
         renderPass.setPipeline(this.renderPipeline);
         renderPass.setBindGroup(0, this.cameraBindGroup);
@@ -818,14 +776,14 @@ class Renderer {
                     val = objBuffer;
                     this.objectMap.set(el.id, val);
                 }
-                this.device.queue.writeBuffer(this.objTranBuffer, objectCount * 256, objVerts.objectMatrix);
+                this.device.queue.writeBuffer(this.objTransformationBuffer, objectCount * 256, objVerts.objectMatrix);
                 this.device.queue.writeBuffer(this.colorBuffer, objectCount * 256, objVerts.color);
                 renderPass.setVertexBuffer(0, val);
                 renderPass.setBindGroup(1, this.objectBindGroup, [objectCount * 256, objectCount * 256]);
                 renderPass.draw(objVerts.numVerticies);
                 objectCount += 1;
             }
-            if (el instanceof _Objects_model__WEBPACK_IMPORTED_MODULE_5__.Model) {
+            if (el instanceof _Objects_model__WEBPACK_IMPORTED_MODULE_4__.Model) {
                 let objVerts = el.getData();
                 if (objVerts === undefined) {
                     return;
@@ -846,14 +804,14 @@ class Renderer {
                     val = objBuffer;
                     this.objectMap.set(el.id, val);
                 }
-                this.device.queue.writeBuffer(this.objTranBuffer, objectCount * 256, objVerts.objectMatrix);
+                this.device.queue.writeBuffer(this.objTransformationBuffer, objectCount * 256, objVerts.objectMatrix);
                 this.device.queue.writeBuffer(this.colorBuffer, objectCount * 256, objVerts.color);
                 renderPass.setVertexBuffer(0, val);
                 renderPass.setBindGroup(1, this.objectBindGroup, [objectCount * 256, objectCount * 256]);
                 renderPass.draw(objVerts.numVerticies);
                 objectCount += 1;
             }
-            if (el instanceof _Objects_light__WEBPACK_IMPORTED_MODULE_4__.Light) {
+            if (el instanceof _Objects_light__WEBPACK_IMPORTED_MODULE_3__.Light) {
                 let lightData = el.getData();
                 lightArr.set(lightData.orientation, lightCount * 4);
                 this.device.queue.writeBuffer(this.lightBuffer, 0, lightArr);
@@ -909,7 +867,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("struct Camera {\r\n    matrix: mat4x4f,\r\n};\r\n\r\nstruct VertexOutput {\r\n    @builtin(position) position: vec4f,\r\n    @location(0) normal: vec3f,\r\n};\r\n\r\n// Bind group for world\r\n@group(0) @binding(0) var<uniform> cam: Camera;\r\n@group(0) @binding(1) var<uniform> light: array<vec3f, 3>;\r\n\r\n// Bind group for objects\r\n@group(1) @binding(0) var<uniform> objTran: mat4x4f;\r\n@group(1) @binding(1) var<uniform> color: vec4f;\r\n\r\n@vertex\r\nfn vert(\r\n    @location(0) position: vec4f,\r\n    @location(1) normal: vec3f,\r\n    @builtin(vertex_index) vertIndex: u32\r\n) -> VertexOutput {\r\n    var vsOut: VertexOutput;\r\n    vsOut.position = cam.matrix * objTran * position;\r\n    vsOut.normal = (objTran * vec4f(normal, 0)).xyz;\r\n    return vsOut;\r\n}\r\n\r\n@fragment\r\nfn frag(vsOut: VertexOutput) -> @location(0) vec4f {\r\n    let normal = normalize(vsOut.normal);\r\n    var lgh: f32;\r\n    for (var i = 0; i < 3; i++) {\r\n        let dp = dot(normal, -light[i]);\r\n        if (dp > 0) {\r\n            lgh += dot(normal, -light[i]); // Num between 0..1\r\n        }\r\n    }\r\n    if (lgh < 0.2) { // Adjust min shadow\r\n        lgh = 0.2;\r\n    }\r\n    let col = color.rgb * lgh; // Multiply only color (not alpha)\r\n    return vec4f(col, color.a);\r\n    // return color; \r\n    // return vec4f(0.8, 0.5, 0.2, 1);\r\n}\r\n");
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("struct Camera {\r\n    matrix: mat4x4f,\r\n};\r\n\r\nstruct VertexOutput {\r\n    @builtin(position) position: vec4f,\r\n    @location(0) normal: vec3f,\r\n};\r\n\r\n// Bind group for world\r\n@group(0) @binding(0) var<uniform> cam: Camera;\r\n@group(0) @binding(1) var<uniform> light: array<vec3f, 3>;\r\n\r\n// Bind group for objects\r\n@group(1) @binding(0) var<uniform> objTran: mat4x4f;\r\n@group(1) @binding(1) var<uniform> color: vec4f;\r\n\r\n@vertex\r\nfn vert(\r\n    @location(0) position: vec4f,\r\n    @location(1) normal: vec3f,\r\n    @builtin(vertex_index) vertIndex: u32\r\n) -> VertexOutput {\r\n    var vsOut: VertexOutput;\r\n    vsOut.position = cam.matrix * objTran * position;\r\n    vsOut.normal = (objTran * vec4f(normal, 0)).xyz;\r\n    return vsOut;\r\n}\r\n\r\n@fragment\r\nfn frag(vsOut: VertexOutput) -> @location(0) vec4f {\r\n    let normal = normalize(vsOut.normal);\r\n    var lgh: f32;\r\n    for (var i = 0; i < 3; i++) {\r\n        let dp = dot(normal, -light[i]);\r\n        if dp > 0 {\r\n            lgh += dot(normal, -light[i]); // Num between 0..1\r\n        }\r\n    }\r\n    if lgh < 0.2 { // Adjust min shadow\r\n        lgh = 0.2;\r\n    }\r\n    let col = color.rgb * lgh; // Multiply only color (not alpha)\r\n    return vec4f(col, color.a);\r\n    // return color; \r\n    // return vec4f(0.8, 0.5, 0.2, 1);\r\n}\r\n");
 
 /***/ }),
 

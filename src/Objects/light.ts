@@ -5,7 +5,7 @@ export class Light implements IObject {
     public name: string;
     public id: string;
     public position: Vec3;
-    public orientation: Vec3;
+    public rotation: Vec3;
 
     private yaw = 0;
     private pitch = 0;
@@ -15,8 +15,8 @@ export class Light implements IObject {
         this.name = name;
         this.position = vec3.create(0, 0, 0);
         // this.orientation = new Float32Array([orientation[0], orientation[1], orientation[2]]);
-        this.orientation = vec3.create(orientation[0], orientation[1], orientation[2]);
-        vec3.normalize(this.orientation, this.orientation);
+        this.rotation = vec3.create(orientation[0], orientation[1], orientation[2]);
+        vec3.normalize(this.rotation, this.rotation);
 
         let d = new Date();
         this.id = d.getTime().toString() + name;
@@ -28,12 +28,12 @@ export class Light implements IObject {
         let radX = rotX * 180 / Math.PI;
         let radY = rotY * 180 / Math.PI;
         // let radZ = rotZ * 180 / Math.PI;
-        vec3.rotateX(vec3.rotateY(this.orientation, this.origin, radY), this.origin, radX, this.orientation);
+        vec3.rotateX(vec3.rotateY(this.rotation, this.origin, radY), this.origin, radX, this.rotation);
     };
 
     public getData = () => {
         return {
-            orientation: this.orientation,
+            orientation: this.rotation,
         }
     }
 };

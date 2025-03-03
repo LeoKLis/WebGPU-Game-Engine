@@ -9,7 +9,7 @@ export class Camera implements IObject{
     public id: string;
     public name: string;
     public position = vec3.create(0, 0, -5);
-    public orientation = vec3.create(0, 0, 0);
+    public rotation = vec3.create(0, 0, 0);
 
     public right: Vec3;
     public up: Vec3;

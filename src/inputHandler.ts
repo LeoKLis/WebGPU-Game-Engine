@@ -92,16 +92,16 @@ export class InputHandler {
             if (!val) return;
             switch (key) {
                 case 'a':
-                    object.move(this.moveSpeed * deltaTime, 0, 0);
+                    // object.move(this.moveSpeed * deltaTime, 0, 0);
                     break;
                 case 'd':
-                    object.move(-this.moveSpeed * deltaTime, 0, 0);
+                    // object.move(-this.moveSpeed * deltaTime, 0, 0);
                     break;
                 case 'w':
-                    object.move(0, 0, this.moveSpeed * deltaTime);
+                    // object.move(0, 0, this.moveSpeed * deltaTime);
                     break;
                 case 's':
-                    object.move(0, 0, -this.moveSpeed * deltaTime);
+                    // object.move(0, 0, -this.moveSpeed * deltaTime);
                     break;
 
             }

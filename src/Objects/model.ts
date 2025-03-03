@@ -8,7 +8,7 @@ export class Model implements IObject, IShape {
     public name: string;
     public id: string;
     public position: Vec3;
-    public orientation: Vec3;
+    public rotation: Vec3;
     public scale: Float32Array;
 
     private positionMatrix: Mat4;
@@ -26,7 +26,7 @@ export class Model implements IObject, IShape {
     constructor(name: string, position: [number, number, number], orientation: [number, number, number], scale: [number, number, number], color: [number, number, number, number]) {
         this.name = name;
         this.position = vec3.create(...position);
-        this.orientation = vec3.create(...orientation);
+        this.rotation = vec3.create(...orientation);
         this.scale = vec3.create(...scale);
 
         this.positionMatrix = mat4.translate(mat4.identity(), this.position);
@@ -75,9 +75,9 @@ export class Model implements IObject, IShape {
         let radY = rotY * 180 / Math.PI;
         let radZ = rotZ * 180 / Math.PI;
 
-        this.orientation[0] += radY;
-        this.orientation[1] += radX;
-        mat4.rotateX(mat4.rotationY(this.orientation[0]), this.orientation[1], this.rotationMatrix);
+        this.rotation[0] += radY;
+        this.rotation[1] += radX;
+        mat4.rotateX(mat4.rotationY(this.rotation[0]), this.rotation[1], this.rotationMatrix);
     };
 
     public getData = () => {

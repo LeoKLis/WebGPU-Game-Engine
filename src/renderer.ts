@@ -2,7 +2,7 @@ import { Camera } from "./Objects/camera";
 import { Scene } from "./scene";
 import shader from "./shaders/shaderMain.wgsl";
 import { Cube } from "./Objects/shapes/cube";
-import { createBindGroup, createBindGroupLayout, createBuffer, createRenderPipelineDescriptor, createTexture, setRenderPassDescriptor } from "./helpers"
+import { setRenderPassDescriptor } from "./helpers"
 import { Light } from "./Objects/light";
 import { Model } from "./Objects/model";
 
@@ -25,7 +25,7 @@ export class Renderer {
     private cameraBuffer!: GPUBuffer;
     private lightBuffer!: GPUBuffer;
 
-    private objTranBuffer!: GPUBuffer;
+    private objTransformationBuffer!: GPUBuffer;
     private colorBuffer!: GPUBuffer;
 
     private isMultisampled = true;
@@ -42,11 +42,12 @@ export class Renderer {
             console.log("This browser/device doesn't support WebGPU...");
             return;
         }
+
         // Get device
         let adapter = await navigator.gpu.requestAdapter();
         this.device = await adapter!.requestDevice();
         if (this.device === undefined) {
-            console.log("Couldn't load device. Exiting...");
+            console.log("Couldn't load device (not supported)");
             return;
         }
 
@@ -63,71 +64,172 @@ export class Renderer {
         this.canvas.height = this.canvas.clientHeight * window.devicePixelRatio;
 
         // ========== Create bind group layouts ==========
-        const cameraBindGroupLayout = createBindGroupLayout(
-            this.device,
-            [
+        const cameraBindGroupLayoutDescriptor: GPUBindGroupLayoutDescriptor = {
+            label: 'Camera bind group layout desc',
+            entries: [
                 {
+                    binding: 0,
                     visibility: GPUShaderStage.VERTEX,
-                    bufferType: 'uniform',
-                    hasDynamicOffset: false
+                    buffer: {
+                        type: "uniform",
+                        hasDynamicOffset: false,
+                    },
                 },
                 {
+                    binding: 1,
                     visibility: GPUShaderStage.FRAGMENT,
-                    bufferType: 'uniform',
-                    hasDynamicOffset: false
-                }
-            ],
-        )
-        const objectBindGroupLayout = createBindGroupLayout(
-            this.device,
-            [
-                {
-                    visibility: GPUShaderStage.VERTEX,
-                    bufferType: 'uniform',
-                    hasDynamicOffset: true
+                    buffer: {
+                        type: "uniform",
+                        hasDynamicOffset: false,
+                    },
                 },
-                {
-                    visibility: GPUShaderStage.FRAGMENT,
-                    bufferType: 'uniform',
-                    hasDynamicOffset: true
-                }
-            ],
-        )
+            ]
+        };  
+        const cameraBindGroupLayout = this.device.createBindGroupLayout(cameraBindGroupLayoutDescriptor);
 
-        // Create render pipeline
-        this.renderPipeline = this.device.createRenderPipeline(createRenderPipelineDescriptor(
-            this.device,
-            shader,
-            navigator.gpu.getPreferredCanvasFormat(),
-            [cameraBindGroupLayout, objectBindGroupLayout],
-            [
+        const objectBindGroupLayoutDescriptor: GPUBindGroupLayoutDescriptor = {
+            entries: [
                 {
-                    arrayStride: (3 + 3) * 4, // vertex (3) i normals (3)
-                    attributes: [
-                        { shaderLocation: 0, offset: 0, format: 'float32x3' },
-                        { shaderLocation: 1, offset: 3 * 4, format: 'float32x3' }
-                    ]
-                }
-            ],
-            this.isMultisampled,
-        ));
+                    binding: 0,
+                    visibility: GPUShaderStage.VERTEX,
+                    buffer: {
+                        type: 'uniform',
+                        hasDynamicOffset: true,
+                    }
+                },
+                {
+                    binding: 1,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    buffer: {
+                        type: 'uniform',
+                        hasDynamicOffset: true,
+                    }
+                },
+
+            ]
+        }
+        const objectBindGroupLayout = this.device.createBindGroupLayout(objectBindGroupLayoutDescriptor);
+
+        // ========== Create render pipeline ==========
+        const shaderModule = this.device.createShaderModule({ code: shader });
+        const renderPipelineDescriptor: GPURenderPipelineDescriptor = {
+            label: 'Default render pipeline',
+            layout: this.device.createPipelineLayout({ bindGroupLayouts: [cameraBindGroupLayout, objectBindGroupLayout] }),
+            vertex: {
+                module: shaderModule,
+                buffers: [
+                    {
+                        arrayStride: (3 + 3) * 4, // 3 vertex coords & 3 normals coords
+                        attributes: [
+                            { shaderLocation: 0, offset: 0, format: 'float32x3' },
+                            { shaderLocation: 1, offset: 3 * 4, format: 'float32x3' },
+                        ]
+                    }
+                ]
+            },
+            fragment: {
+                module: shaderModule,
+                targets: [{ format: this.presentationFormat }]
+            },
+            depthStencil: {
+                format: 'depth24plus',
+                depthWriteEnabled: true,
+                depthCompare: 'less',
+            },
+            multisample: {
+                count: this.isMultisampled ? 4 : 1,
+            },
+        }
+        this.renderPipeline = this.device.createRenderPipeline(renderPipelineDescriptor);
 
         // ========== Camera Bind Group ==========
-        this.cameraBuffer = createBuffer(this.device, 16 * 4, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST);
-        this.lightBuffer = createBuffer(this.device, 3 * 4 * 4, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST);
-        this.lightBuffer.label = "Svjetlo meduspremnik";
-        this.cameraBindGroup = createBindGroup(this.device, this.renderPipeline.getBindGroupLayout(0), [{ buffer: this.cameraBuffer, size: 16 * 4 }, { buffer: this.lightBuffer, size: 3 * 4 * 4 }]);
+        this.cameraBuffer = this.device.createBuffer({
+            size: 4 * 4 * 4, // 4 x 4 float32 matrix
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        });
+        this.lightBuffer = this.device.createBuffer({
+            label: 'Meduspremnik za svjetlo',
+            size: 3 * 4 * 4,
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        });
+        this.cameraBindGroup = this.device.createBindGroup({
+            layout: this.renderPipeline.getBindGroupLayout(0),
+            entries: [
+                {
+                    binding: 0,
+                    resource: {
+                        buffer: this.cameraBuffer,
+                        offset: 0,
+                        size: 16 * 4,
+                    }
+                },
+                {
+                    binding: 1,
+                    resource: {
+                        buffer: this.lightBuffer,
+                        offset: 0,
+                        size: 12 * 4,
+                    }
+                },
+            ],
+        });
 
         // ========== Object Bind Group ==========
-        this.objTranBuffer = createBuffer(this.device, 4 * 16 * 1024, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST);
-        this.colorBuffer = createBuffer(this.device, 4 * 4 * 1024, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST);
-        this.objectBindGroup = createBindGroup(this.device, this.renderPipeline.getBindGroupLayout(1), [{ buffer: this.objTranBuffer, size: 4 * 16 }, { buffer: this.colorBuffer, size: 4 * 4 }]);
+        this.objTransformationBuffer = this.device.createBuffer({
+            size: 4 * 16 * 1024, 
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+        });
+        this.colorBuffer = this.device.createBuffer({
+            size: 4 * 4 * 1024, 
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+        });
+        this.objectBindGroup = this.device.createBindGroup({
+            layout: this.renderPipeline.getBindGroupLayout(1),
+            entries: [
+                {
+                    binding: 0,
+                    resource: {
+                        buffer: this.objTransformationBuffer,
+                        offset: 0,
+                        size: 4 * 16,
+                    }
+                },
+                {
+                    binding: 1,
+                    resource: {
+                        buffer: this.colorBuffer,
+                        offset: 0,
+                        size: 4 * 4,
+                    }
+                },
+            ],
+        })
 
         // Prepare depth texture
-        const depthTexture = createTexture(this.device, this.context, 'depth24plus', GPUTextureUsage.RENDER_ATTACHMENT, this.isMultisampled);
+        const depthTexture = this.device.createTexture({
+            size: [this.context.getCurrentTexture().width, this.context.getCurrentTexture().height],
+            format: 'depth24plus',
+            usage: GPUTextureUsage.RENDER_ATTACHMENT,
+            sampleCount: this.isMultisampled ? 4 : 1
+        })
 
         // Initialize and set render pass descriptor
-        this.renderPassDescriptor = setRenderPassDescriptor([0.2, 0.2, 0.2, 1], 'clear', 'store', depthTexture);
+        // this.renderPassDescriptor = setRenderPassDescriptor([0.2, 0.2, 0.2, 1], 'clear', 'store', depthTexture);
+        this.renderPassDescriptor = {
+            // @ts-ignore
+            colorAttachments: [{
+                    clearValue: [0.2, 0.2, 0.2, 1],
+                    loadOp: 'clear',
+                    storeOp: 'store',
+                }
+            ],
+            depthStencilAttachment: {
+                view: depthTexture.createView(),
+                depthClearValue: 1.0,
+                depthLoadOp: 'clear',
+                depthStoreOp: 'discard',
+            }
+        }
     }
 
     public render = (scene: Scene, time: number) => {
@@ -147,10 +249,12 @@ export class Renderer {
         }
 
         const encoder = this.device.createCommandEncoder({ label: 'Default encoder' });
-        for (let el of this.renderPassDescriptor.colorAttachments) {
-            el!.view = this.multisamlpeTexture.createView();
-            el!.resolveTarget = canvasTexture.createView();
-        }
+        // for (let el of this.renderPassDescriptor.colorAttachments) {
+        //     el!.view = this.multisamlpeTexture.createView();
+        //     el!.resolveTarget = canvasTexture.createView();
+        // }
+        (this.renderPassDescriptor.colorAttachments as GPURenderPassColorAttachment[])[0].view = this.multisamlpeTexture.createView();
+        (this.renderPassDescriptor.colorAttachments as GPURenderPassColorAttachment[])[0].resolveTarget = canvasTexture.createView();
 
         const renderPass = encoder.beginRenderPass(this.renderPassDescriptor);
         renderPass.setPipeline(this.renderPipeline);
@@ -184,7 +288,7 @@ export class Renderer {
                     this.objectMap.set(el.id, val);
                 }
 
-                this.device.queue.writeBuffer(this.objTranBuffer, objectCount * 256, objVerts.objectMatrix);
+                this.device.queue.writeBuffer(this.objTransformationBuffer, objectCount * 256, objVerts.objectMatrix);
                 this.device.queue.writeBuffer(this.colorBuffer, objectCount * 256, objVerts.color);
 
                 renderPass.setVertexBuffer(0, val);
@@ -216,7 +320,7 @@ export class Renderer {
                     this.objectMap.set(el.id, val);
                 }
 
-                this.device.queue.writeBuffer(this.objTranBuffer, objectCount * 256, objVerts.objectMatrix);
+                this.device.queue.writeBuffer(this.objTransformationBuffer, objectCount * 256, objVerts.objectMatrix);
                 this.device.queue.writeBuffer(this.colorBuffer, objectCount * 256, objVerts.color);
 
                 renderPass.setVertexBuffer(0, val);

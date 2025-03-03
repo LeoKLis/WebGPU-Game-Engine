@@ -33,11 +33,11 @@ fn frag(vsOut: VertexOutput) -> @location(0) vec4f {
     var lgh: f32;
     for (var i = 0; i < 3; i++) {
         let dp = dot(normal, -light[i]);
-        if (dp > 0) {
+        if dp > 0 {
             lgh += dot(normal, -light[i]); // Num between 0..1
         }
     }
-    if (lgh < 0.2) { // Adjust min shadow
+    if lgh < 0.2 { // Adjust min shadow
         lgh = 0.2;
     }
     let col = color.rgb * lgh; // Multiply only color (not alpha)

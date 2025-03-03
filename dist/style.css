@@ -12,14 +12,14 @@ html, body {
 }
 
 #canvas {
-    width: 80%;
+    width: 100%;
     height: 100%;
 }
 
-#sidebar {
+/* #sidebar {
     width: 20%;
     background-color: white;
-}
+} */
 
 .object {
     background-color: whitesmoke;
