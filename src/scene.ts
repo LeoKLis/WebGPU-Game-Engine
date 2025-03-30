@@ -1,19 +1,27 @@
-import { Camera } from "./Objects/camera";
-import { IObject } from "./interfaces/IObject";
+import { Object } from "./Objects/object";
 
 export class Scene {
-    public container: Array<IObject>;
+    public objects: Array<Object>;
+    private objectLookup: Map<number, Object>;
+    
+    public constructor() {
+        this.objects = new Array<Object>();
+        this.objectLookup = new Map<number, Object>();
+    }
 
-    constructor(camera?: Camera){
-        if(camera === undefined){
-            this.container = new Array<IObject>();
-        }
-        else {
-            this.container = new Array<IObject>(camera);
+    public addObjects(...objects: Object[]) {
+        for (let object of objects) {
+            if (this.objectLookup.has(object.hashCode())) continue;
+            this.objects.push(object);
+            this.objectLookup.set(object.hashCode(), object);
         }
     }
 
-    public add(...object: Array<IObject>){
-        this.container.push(...object);
+    public removeObjects(...objects: Object[]) {
+        for (let object of objects) {
+            if (!this.objectLookup.has(object.hashCode())) continue;
+            this.objectLookup.delete(object.hashCode());
+            this.objects = this.objects.splice(this.objects.indexOf(object));
+        }
     }
 }

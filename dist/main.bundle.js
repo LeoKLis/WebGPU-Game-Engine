@@ -16,26 +16,62 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _src_scene__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./src/scene */ "./src/scene.ts");
 /* harmony import */ var _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./src/Objects/shapes/cube */ "./src/Objects/shapes/cube.ts");
 /* harmony import */ var _src_Objects_light__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./src/Objects/light */ "./src/Objects/light.ts");
+/* harmony import */ var _src_Objects_shapes_sphere__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./src/Objects/shapes/sphere */ "./src/Objects/shapes/sphere.ts");
+/* harmony import */ var _src_collision__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./src/collision */ "./src/collision.ts");
 
 
 
 
 
 
-const canvas = document.getElementById("canvas");
+
+
+const canvas = window.document.getElementById("canvas");
 const renderer = new _src_renderer__WEBPACK_IMPORTED_MODULE_2__.Renderer(canvas);
-await renderer.initializeRenderer();
+await renderer.initialize();
 const inputHandler = new _src_inputHandler__WEBPACK_IMPORTED_MODULE_1__.InputHandler(canvas, 0.3, 0.002);
 const scene = new _src_scene__WEBPACK_IMPORTED_MODULE_3__.Scene();
-const camera = new _src_Objects_camera__WEBPACK_IMPORTED_MODULE_0__.Camera(_src_Objects_camera__WEBPACK_IMPORTED_MODULE_0__.CameraType.perspective, canvas.width / canvas.height, undefined, undefined, undefined, true);
-const cube = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube("Kocka", [2, 0, 0], [0, 0, 0], [1, 1, 1], [0.8, 0.5, 0.2, 1]); // Narancasta kocka desno
-const light = new _src_Objects_light__WEBPACK_IMPORTED_MODULE_5__.Light("Svijetlo", [-0.4, -0.8, -1]);
-scene.add(camera, cube, light);
+const camera = new _src_Objects_camera__WEBPACK_IMPORTED_MODULE_0__.Camera({
+    name: "Kamera",
+    id: "kameraID",
+    position: [0, 0, -5],
+    rotation: [0, 0.1, 0],
+    size: [1, 1, 1],
+    cameraType: _src_Objects_camera__WEBPACK_IMPORTED_MODULE_0__.CameraType.perspective,
+    active: true
+});
+const cube = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
+    name: "Kocka",
+    id: "kockaID",
+    position: [0, 0, 0],
+    rotation: [0, 0, 0],
+    size: [2, 1, 1],
+    color: [0.8, 0.5, 0.2, 1],
+});
+const sphere = new _src_Objects_shapes_sphere__WEBPACK_IMPORTED_MODULE_6__.Sphere({
+    name: "Lopta",
+    id: "sphereID",
+    position: [1, 1.5, 0],
+    rotation: [0, 0, 0],
+    radius: 1,
+    color: [0.4, 0.9, 0.3, 1],
+});
+const light = new _src_Objects_light__WEBPACK_IMPORTED_MODULE_5__.Light({
+    name: "Svijetlo",
+    id: "svijetloID",
+    position: [0, 0, 0],
+    rotation: [-0.4, -0.8, -1],
+    size: [1, 1, 1]
+});
+scene.addObjects(camera, cube, light, sphere);
 let lastTime = 0;
 let render = (time) => {
     let deltaTime = time - lastTime;
     lastTime = time;
     inputHandler.defaultInputControls(camera, deltaTime);
+    // sphere.localMove(0, 0, 0.0006);
+    cube.localRotate(0.0001, 0.0001, 0);
+    console.log((0,_src_collision__WEBPACK_IMPORTED_MODULE_7__.checkCollision)(sphere, cube));
     renderer.render(scene, time);
     requestAnimationFrame(render);
 };
@@ -57,70 +93,36 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   Camera: () => (/* binding */ Camera),
 /* harmony export */   CameraType: () => (/* binding */ CameraType)
 /* harmony export */ });
-/* harmony import */ var wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! wgpu-matrix */ "./node_modules/wgpu-matrix/dist/3.x/wgpu-matrix.module.js");
+/* harmony import */ var wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! wgpu-matrix */ "./node_modules/wgpu-matrix/dist/3.x/wgpu-matrix.module.js");
+/* harmony import */ var _object__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./object */ "./src/Objects/object.ts");
+
 
 var CameraType;
 (function (CameraType) {
     CameraType[CameraType["perspective"] = 0] = "perspective";
 })(CameraType || (CameraType = {}));
-class Camera {
-    id;
-    name;
-    position = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(0, 0, -5);
-    rotation = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(0, 0, 0);
-    right;
-    up;
-    back;
-    yaw = 0;
-    pitch = 0;
+class Camera extends _object__WEBPACK_IMPORTED_MODULE_0__.Object {
     type;
     fov;
     near;
     far;
     aspectRatio;
-    projectionMatrix;
-    positionMatrix;
-    rotationMatrix;
     active;
-    constructor(type, aspectRatio, fov = Math.PI / 3, near = 0.1, far = 100, active = false) {
-        this.name = "camera";
-        this.type = type;
-        this.fov = fov;
-        this.near = near;
-        this.far = far;
-        this.aspectRatio = aspectRatio;
-        this.projectionMatrix = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.perspective(this.fov, this.aspectRatio, this.near, this.far);
-        this.rotationMatrix = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.identity();
-        this.positionMatrix = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.translate(wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.identity(), this.position);
-        this.right = new Float32Array(this.rotationMatrix.buffer, 4 * 0, 3);
-        this.up = new Float32Array(this.rotationMatrix.buffer, 4 * 4, 3);
-        this.back = new Float32Array(this.rotationMatrix.buffer, 4 * 8, 3);
-        this.recalcAngles(this.back);
-        this.active = active;
-        let d = new Date();
-        this.id = d.getTime().toString() + this.name;
-    }
-    move(x = 0.0, y = 0.0, z = 0.0) {
-        let movement = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(0, 0, 0);
-        movement = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.addScaled(movement, this.right, x);
-        movement = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.addScaled(movement, this.up, y);
-        movement = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.addScaled(movement, this.back, z);
-        wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.translate(this.positionMatrix, movement, this.positionMatrix);
-    }
-    rotate(degreesX = 0.0, degreesY = 0.0, degreesZ = 0.0) {
-        let radiansX = degreesX * 180 / Math.PI;
-        let radiansY = degreesY * 180 / Math.PI;
-        this.yaw += radiansY;
-        this.pitch += radiansX;
-        wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.rotateX(wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.rotationY(this.yaw), this.pitch, this.rotationMatrix);
-    }
-    recalcAngles(vec) {
-        this.yaw = Math.atan2(vec[0], vec[2]);
-        this.pitch = -Math.asin(vec[1]);
+    projectionMatrix;
+    constructor(cameraDescriptor) {
+        super(cameraDescriptor);
+        const canvas = document.getElementById("canvas");
+        this.aspectRatio = canvas.width / canvas.height;
+        this.type = cameraDescriptor.cameraType;
+        this.fov = Math.PI / 3;
+        this.near = 0.1;
+        this.far = 100;
+        this.projectionMatrix = wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__.mat4.perspective(this.fov, this.aspectRatio, this.near, this.far);
+        this.active = cameraDescriptor.active;
     }
     update() {
-        let viewMatrix = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.multiply(wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.inverse(this.rotationMatrix), this.positionMatrix);
-        return wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.multiply(this.projectionMatrix, viewMatrix);
+        let mdl = wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__.mat4.multiply(wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__.mat4.inverse(this.rotationMatrix), this.positionMatrix);
+        return wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__.mat4.multiply(this.projectionMatrix, wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__.mat4.scale(mdl, this.size));
     }
 }
 
@@ -137,31 +139,18 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   Light: () => (/* binding */ Light)
 /* harmony export */ });
-/* harmony import */ var wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! wgpu-matrix */ "./node_modules/wgpu-matrix/dist/3.x/wgpu-matrix.module.js");
+/* harmony import */ var wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! wgpu-matrix */ "./node_modules/wgpu-matrix/dist/3.x/wgpu-matrix.module.js");
+/* harmony import */ var _object__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./object */ "./src/Objects/object.ts");
 
-class Light {
-    name;
-    id;
-    position;
-    rotation;
-    yaw = 0;
-    pitch = 0;
-    origin = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(0, 0, 0);
-    constructor(name, orientation) {
-        this.name = name;
-        this.position = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(0, 0, 0);
-        // this.orientation = new Float32Array([orientation[0], orientation[1], orientation[2]]);
-        this.rotation = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(orientation[0], orientation[1], orientation[2]);
-        wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.normalize(this.rotation, this.rotation);
-        let d = new Date();
-        this.id = d.getTime().toString() + name;
+
+class Light extends _object__WEBPACK_IMPORTED_MODULE_0__.Object {
+    constructor(lightDescriptor) {
+        super(lightDescriptor);
     }
-    move = (x, y, z) => { };
-    rotate = (rotX, rotY, rotZ) => {
-        let radX = rotX * 180 / Math.PI;
-        let radY = rotY * 180 / Math.PI;
-        // let radZ = rotZ * 180 / Math.PI;
-        wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.rotateX(wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.rotateY(this.rotation, this.origin, radY), this.origin, radX, this.rotation);
+    localRotate = (degX, degY, degZ) => {
+        wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__.vec3.rotateX(this.rotation, wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__.vec3.zero(), degX * 180 / Math.PI, this.rotation);
+        wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__.vec3.rotateY(this.rotation, wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__.vec3.zero(), degX * 180 / Math.PI, this.rotation);
+        wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__.vec3.rotateZ(this.rotation, wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__.vec3.zero(), degX * 180 / Math.PI, this.rotation);
     };
     getData = () => {
         return {
@@ -174,95 +163,90 @@ class Light {
 
 /***/ }),
 
-/***/ "./src/Objects/model.ts":
-/*!******************************!*\
-  !*** ./src/Objects/model.ts ***!
-  \******************************/
+/***/ "./src/Objects/object.ts":
+/*!*******************************!*\
+  !*** ./src/Objects/object.ts ***!
+  \*******************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   Model: () => (/* binding */ Model)
+/* harmony export */   Object: () => (/* binding */ Object)
 /* harmony export */ });
 /* harmony import */ var wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! wgpu-matrix */ "./node_modules/wgpu-matrix/dist/3.x/wgpu-matrix.module.js");
-/* harmony import */ var _loaders_gl_core__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @loaders.gl/core */ "./node_modules/@loaders.gl/core/dist/lib/api/parse.js");
-/* harmony import */ var _loaders_gl_obj__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @loaders.gl/obj */ "./node_modules/@loaders.gl/obj/dist/index.js");
 
-
-
-class Model {
+class Object {
     name;
     id;
     position;
     rotation;
-    scale;
+    size;
     positionMatrix;
     rotationMatrix;
     scaleMatrix;
-    color;
-    // private positions!: Float32Array;
-    vertexData;
-    normalsData;
-    indexData;
-    vertexNormals;
-    constructor(name, position, orientation, scale, color) {
-        this.name = name;
-        this.position = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(...position);
-        this.rotation = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(...orientation);
-        this.scale = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(...scale);
-        this.positionMatrix = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.translate(wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.identity(), this.position);
-        this.rotationMatrix = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.identity();
-        this.scaleMatrix = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.scale(wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.identity(), scale);
-        this.color = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec4.create(...color);
-        let d = new Date();
-        this.id = d.getTime().toString() + name;
+    right;
+    up;
+    back;
+    yaw;
+    pitch;
+    roll;
+    constructor(objectDescriptor) {
+        this.name = objectDescriptor.name;
+        this.id = objectDescriptor.id;
+        this.rotation = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(...objectDescriptor.rotation);
+        if (objectDescriptor.size !== undefined)
+            this.size = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(...objectDescriptor.size);
+        else
+            this.size = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(1, 1, 1);
+        this.positionMatrix = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.translate(wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.identity(), objectDescriptor.position);
+        this.position = new Float32Array(this.positionMatrix.buffer, 4 * 12, 3);
+        this.scaleMatrix = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.scale(wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.identity(), this.size);
+        this.rotationMatrix = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.rotateX(wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.identity(), this.rotation[0]);
+        wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.rotateY(this.rotationMatrix, this.rotation[1], this.rotationMatrix);
+        wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.rotateZ(this.rotationMatrix, this.rotation[2], this.rotationMatrix);
+        this.right = new Float32Array(this.rotationMatrix.buffer, 4 * 0, 3);
+        this.up = new Float32Array(this.rotationMatrix.buffer, 4 * 4, 3);
+        this.back = new Float32Array(this.rotationMatrix.buffer, 4 * 8, 3);
+        this.yaw = Math.atan2(this.back[0], this.back[2]);
+        this.pitch = -Math.asin(this.back[1]);
+        this.roll = Math.atan2(-this.up[0], this.right[0]);
     }
-    loadDataFromFile = async (url) => {
-        const data = await (0,_loaders_gl_core__WEBPACK_IMPORTED_MODULE_1__.parse)(fetch(`../../${url}`), _loaders_gl_obj__WEBPACK_IMPORTED_MODULE_2__.OBJLoader);
-        const dataPosition = data.attributes['POSITION'].value;
-        if (data.attributes['NORMAL'] === undefined) {
-            this.vertexData = new Float32Array(dataPosition.length * 6);
-            for (let i = 0; i < dataPosition.length; i++) {
-                const position = dataPosition.slice(i * 3, i * 3 + 3);
-                this.vertexData.set(position, i * 6);
-                this.vertexData.set([1, 1, 1], i * 6 + 3);
-            }
-        }
-        else {
-            const dataNormal = data.attributes['NORMAL'].value;
-            this.vertexData = new Float32Array(dataPosition.length * 6);
-            for (let i = 0; i < dataPosition.length; i++) {
-                const position = dataPosition.slice(i * 3, i * 3 + 3);
-                this.vertexData.set(position, i * 6);
-                const normal = dataNormal.slice(i * 3, i * 3 + 3);
-                this.vertexData.set(normal, i * 6 + 3);
-            }
-        }
-    };
-    move = (x, y, z) => {
-        let tranVec = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(x, y, z);
-        wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.translate(this.positionMatrix, tranVec, this.positionMatrix);
-    };
-    rotate = (rotX, rotY, rotZ) => {
-        let radX = rotX * 180 / Math.PI;
-        let radY = rotY * 180 / Math.PI;
-        let radZ = rotZ * 180 / Math.PI;
-        this.rotation[0] += radY;
-        this.rotation[1] += radX;
-        wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.rotateX(wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.rotationY(this.rotation[0]), this.rotation[1], this.rotationMatrix);
-    };
-    getData = () => {
-        if (this.vertexData === undefined) {
-            return undefined;
-        }
-        let outMat = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.multiply(wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.multiply(this.positionMatrix, this.rotationMatrix), this.scaleMatrix);
-        return {
-            vertexData: this.vertexData,
-            numVerticies: this.vertexData.length / 6,
-            objectMatrix: outMat,
-            color: this.color.buffer,
-        };
-    };
+    globalMove(x, y, z) {
+        wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.translate(this.positionMatrix, [x, y, z], this.positionMatrix);
+    }
+    globalRotate(x, y, z) {
+        wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.rotateX(this.rotationMatrix, x * 180 / Math.PI, this.rotationMatrix);
+        wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.rotateY(this.rotationMatrix, y * 180 / Math.PI, this.rotationMatrix);
+        wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.rotateZ(this.rotationMatrix, z * 180 / Math.PI, this.rotationMatrix);
+    }
+    localMove(x, y, z) {
+        let relativeDirection = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(0, 0, 0);
+        relativeDirection = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.addScaled(relativeDirection, this.right, x);
+        relativeDirection = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.addScaled(relativeDirection, this.up, y);
+        relativeDirection = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.addScaled(relativeDirection, this.back, z);
+        wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.translate(this.positionMatrix, relativeDirection, this.positionMatrix);
+    }
+    localRotate(x, y, z) {
+        this.yaw += y * 180 / Math.PI;
+        this.pitch += x * 180 / Math.PI;
+        this.roll += z * 180 / Math.PI;
+        const rotY = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.rotationY(this.yaw);
+        const rotX = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.rotationX(this.pitch);
+        const rotZ = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.rotationZ(this.roll);
+        wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.multiply(rotY, rotX, this.rotationMatrix);
+        wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.multiply(this.rotationMatrix, rotZ, this.rotationMatrix);
+    }
+    scale(x, y, z) {
+        wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.scale(this.scaleMatrix, [x, y, z], this.scaleMatrix);
+    }
+    getRotationMatrix() {
+        return this.rotationMatrix;
+    }
+    hashCode() {
+        return this.name.split('').reduce((hash, char) => {
+            return char.charCodeAt(0) + (hash << 6) + (hash << 16) - hash;
+        }, 0);
+    }
 }
 
 
@@ -278,34 +262,29 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   Cube: () => (/* binding */ Cube)
 /* harmony export */ });
-/* harmony import */ var wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! wgpu-matrix */ "./node_modules/wgpu-matrix/dist/3.x/wgpu-matrix.module.js");
+/* harmony import */ var wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! wgpu-matrix */ "./node_modules/wgpu-matrix/dist/3.x/wgpu-matrix.module.js");
+/* harmony import */ var _object__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../object */ "./src/Objects/object.ts");
 
-class Cube {
-    id;
-    name;
-    position;
-    rotation;
-    scale;
-    positionMatrix;
-    rotationMatrix;
-    scaleMatrix;
+
+class Cube extends _object__WEBPACK_IMPORTED_MODULE_0__.Object {
     color;
-    positions;
-    vertexData;
-    indexData;
-    normalsData;
-    constructor(name, position, rotation, scale, color) {
-        this.name = name;
-        this.position = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(...position);
-        this.rotation = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(...rotation);
-        this.scale = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(...scale);
-        this.positionMatrix = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.translate(wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.identity(), this.position);
-        this.rotationMatrix = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.identity();
-        this.scaleMatrix = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.scale(wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.identity(), scale);
-        this.color = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec4.create(...color);
-        let d = new Date();
-        this.id = d.getTime().toString() + this.name;
-        this.positions = new Float32Array([
+    vertices;
+    constructor(cubeDescriptor) {
+        super(cubeDescriptor);
+        this.color = wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__.vec4.create(...cubeDescriptor.color);
+        this.vertices = this.initVertices();
+    }
+    getData() {
+        let outMat = wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__.mat4.multiply(wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__.mat4.multiply(this.positionMatrix, this.rotationMatrix), this.scaleMatrix);
+        return {
+            vertexData: this.vertices,
+            numVerticies: 36,
+            objectMatrix: outMat,
+            color: this.color.buffer,
+        };
+    }
+    initVertices() {
+        let vertices = new Float32Array([
             -0.5, 0.5, 0.5, // front face
             -0.5, -0.5, 0.5,
             0.5, 0.5, 0.5,
@@ -331,7 +310,7 @@ class Cube {
             -0.5, 0.5, -0.5,
             0.5, 0.5, -0.5
         ]);
-        this.normalsData = new Float32Array([
+        let normalsData = new Float32Array([
             0, 0, 1, // Front
             1, 0, 0, // Right
             0, 0, -1, // Back
@@ -339,7 +318,7 @@ class Cube {
             0, -1, 0, // Bottom
             0, 1, 0 // Top
         ]);
-        this.indexData = new Uint16Array([
+        let indexData = new Uint16Array([
             0, 1, 2, 2, 1, 3, // front
             4, 5, 6, 6, 5, 7, // right
             8, 9, 10, 10, 9, 11, // back
@@ -347,37 +326,198 @@ class Cube {
             16, 17, 18, 18, 17, 19, // bottom
             20, 21, 22, 22, 21, 23, // top
         ]);
-        this.vertexData = new Float32Array(this.indexData.length * 6);
-        for (let i = 0; i < this.indexData.length; i++) {
-            const positionIdx = this.indexData[i] * 3;
-            const position = this.positions.slice(positionIdx, positionIdx + 3);
-            this.vertexData.set(position, i * 6);
+        let out = new Float32Array(indexData.length * 6);
+        for (let i = 0; i < indexData.length; i++) {
+            const positionIdx = indexData[i] * 3;
+            const position = vertices.slice(positionIdx, positionIdx + 3);
+            out.set(position, i * 6);
             const quadIdx = (i / 6 | 0) * 3;
-            const normal = this.normalsData.slice(quadIdx, quadIdx + 3);
-            this.vertexData.set(normal, i * 6 + 3);
+            const normal = normalsData.slice(quadIdx, quadIdx + 3);
+            out.set(normal, i * 6 + 3);
         }
+        return out;
     }
-    move = (x, y, z) => {
-        let tranVec = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(x, y, z);
-        wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.translate(this.positionMatrix, tranVec, this.positionMatrix);
-    };
-    rotate = (degX, degY, degZ) => {
-        let radX = degX * 180 / Math.PI;
-        let radY = degY * 180 / Math.PI;
-        let radZ = degZ * 180 / Math.PI;
-        this.rotation[0] += radY;
-        this.rotation[1] += radX;
-        wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.rotateX(wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.rotationY(this.rotation[0]), this.rotation[1], this.rotationMatrix);
+}
+
+
+/***/ }),
+
+/***/ "./src/Objects/shapes/model.ts":
+/*!*************************************!*\
+  !*** ./src/Objects/shapes/model.ts ***!
+  \*************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Model: () => (/* binding */ Model)
+/* harmony export */ });
+/* harmony import */ var wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! wgpu-matrix */ "./node_modules/wgpu-matrix/dist/3.x/wgpu-matrix.module.js");
+/* harmony import */ var _loaders_gl_core__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @loaders.gl/core */ "./node_modules/@loaders.gl/core/dist/lib/api/parse.js");
+/* harmony import */ var _loaders_gl_obj__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @loaders.gl/obj */ "./node_modules/@loaders.gl/obj/dist/index.js");
+/* harmony import */ var _object__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../object */ "./src/Objects/object.ts");
+
+
+
+
+class Model extends _object__WEBPACK_IMPORTED_MODULE_0__.Object {
+    color;
+    // private positions!: Float32Array;
+    vertexData;
+    normalsData;
+    indexData;
+    vertexNormals;
+    constructor(modelDescriptor) {
+        super(modelDescriptor);
+        this.color = wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__.vec4.create(...modelDescriptor.color);
+    }
+    loadDataFromFile = async (url) => {
+        const data = await (0,_loaders_gl_core__WEBPACK_IMPORTED_MODULE_2__.parse)(fetch(`../../${url}`), _loaders_gl_obj__WEBPACK_IMPORTED_MODULE_3__.OBJLoader);
+        const dataPosition = data.attributes['POSITION'].value;
+        if (data.attributes['NORMAL'] === undefined) {
+            this.vertexData = new Float32Array(dataPosition.length * 6);
+            for (let i = 0; i < dataPosition.length; i++) {
+                const position = dataPosition.slice(i * 3, i * 3 + 3);
+                this.vertexData.set(position, i * 6);
+                this.vertexData.set([1, 1, 1], i * 6 + 3);
+            }
+        }
+        else {
+            const dataNormal = data.attributes['NORMAL'].value;
+            this.vertexData = new Float32Array(dataPosition.length * 6);
+            for (let i = 0; i < dataPosition.length; i++) {
+                const position = dataPosition.slice(i * 3, i * 3 + 3);
+                this.vertexData.set(position, i * 6);
+                const normal = dataNormal.slice(i * 3, i * 3 + 3);
+                this.vertexData.set(normal, i * 6 + 3);
+            }
+        }
     };
     getData = () => {
-        let outMat = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.multiply(wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.multiply(this.positionMatrix, this.rotationMatrix), this.scaleMatrix);
+        if (this.vertexData === undefined) {
+            return undefined;
+        }
         return {
             vertexData: this.vertexData,
-            numVerticies: this.indexData.length,
-            objectMatrix: outMat,
+            numVerticies: this.vertexData.length / 6,
+            objectMatrix: this.positionMatrix,
             color: this.color.buffer,
         };
     };
+}
+
+
+/***/ }),
+
+/***/ "./src/Objects/shapes/sphere.ts":
+/*!**************************************!*\
+  !*** ./src/Objects/shapes/sphere.ts ***!
+  \**************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Sphere: () => (/* binding */ Sphere)
+/* harmony export */ });
+/* harmony import */ var wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! wgpu-matrix */ "./node_modules/wgpu-matrix/dist/3.x/wgpu-matrix.module.js");
+/* harmony import */ var _object__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../object */ "./src/Objects/object.ts");
+
+
+class Sphere extends _object__WEBPACK_IMPORTED_MODULE_0__.Object {
+    color;
+    radius;
+    vertices;
+    constructor(sphereDescriptor) {
+        super(sphereDescriptor);
+        this.color = wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__.vec4.create(...sphereDescriptor.color);
+        this.radius = sphereDescriptor.radius;
+        this.size[0] = this.radius;
+        this.size[1] = this.radius;
+        this.size[2] = this.radius;
+        this.vertices = this.initVertices(this.radius, 20, 20);
+    }
+    getData() {
+        let outMat = wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__.mat4.multiply(wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__.mat4.multiply(this.positionMatrix, this.rotationMatrix), this.scaleMatrix);
+        return {
+            vertexData: this.vertices,
+            numVerticies: this.vertices.length / 6,
+            objectMatrix: outMat,
+            color: this.color.buffer,
+        };
+    }
+    setRadius(radius) {
+        this.size[0] = radius;
+        this.size[1] = radius;
+        this.size[2] = radius;
+        wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__.mat4.scaling([radius, radius, radius], this.scaleMatrix);
+    }
+    getRadius() {
+        return this.size[0];
+    }
+    initVertices(radius, latSegments, lonSegments) {
+        const data = [];
+        const vertexMap = []; // Stores raw vertices
+        // Step 1: Generate unique vertices and normals
+        for (let lat = 0; lat <= latSegments; lat++) {
+            const theta = (lat * Math.PI) / latSegments; // Latitude angle (0 to π)
+            const sinTheta = Math.sin(theta);
+            const cosTheta = Math.cos(theta);
+            for (let lon = 0; lon <= lonSegments; lon++) {
+                const phi = (lon * 2 * Math.PI) / lonSegments; // Longitude angle (0 to 2π)
+                const sinPhi = Math.sin(phi);
+                const cosPhi = Math.cos(phi);
+                // Compute vertex position
+                const x = cosPhi * sinTheta;
+                const y = cosTheta;
+                const z = sinPhi * sinTheta;
+                // Store as an array entry
+                vertexMap.push([radius * x, radius * y, radius * z, x, y, z]); // Position + Normal
+            }
+        }
+        // Step 2: Generate triangle data, duplicating vertices
+        for (let lat = 0; lat < latSegments; lat++) {
+            for (let lon = 0; lon < lonSegments; lon++) {
+                const i0 = lat * (lonSegments + 1) + lon;
+                const i1 = i0 + 1;
+                const i2 = i0 + (lonSegments + 1);
+                const i3 = i2 + 1;
+                // First triangle (i0, i2, i1)
+                data.push(...vertexMap[i0], ...vertexMap[i2], ...vertexMap[i1]);
+                // Second triangle (i1, i2, i3)
+                data.push(...vertexMap[i1], ...vertexMap[i2], ...vertexMap[i3]);
+            }
+        }
+        return new Float32Array(data);
+    }
+}
+
+
+/***/ }),
+
+/***/ "./src/collision.ts":
+/*!**************************!*\
+  !*** ./src/collision.ts ***!
+  \**************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   checkCollision: () => (/* binding */ checkCollision)
+/* harmony export */ });
+/* harmony import */ var wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! wgpu-matrix */ "./node_modules/wgpu-matrix/dist/3.x/wgpu-matrix.module.js");
+
+function checkCollision(sphere, cube) {
+    const localSpherePosition = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.subtract(sphere.position, cube.position);
+    const inverseRotationMatrix = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.transpose(cube.getRotationMatrix());
+    const spherePosLocal = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.transformMat4(localSpherePosition, inverseRotationMatrix);
+    const closestX = Math.max(-cube.size[0] / 2, Math.min(spherePosLocal[0], cube.size[0] / 2));
+    const closestY = Math.max(-cube.size[1] / 2, Math.min(spherePosLocal[1], cube.size[1] / 2));
+    const closestZ = Math.max(-cube.size[2] / 2, Math.min(spherePosLocal[2], cube.size[2] / 2));
+    const dx = spherePosLocal[0] - closestX;
+    const dy = spherePosLocal[1] - closestY;
+    const dz = spherePosLocal[2] - closestZ;
+    const distanceSquared = dx * dx + dy * dy + dz * dz;
+    return distanceSquared <= sphere.getRadius() * sphere.getRadius();
 }
 
 
@@ -487,14 +627,15 @@ class InputHandler {
         });
         let mouseMove = this.getMouseMovement();
         if (this.leftMouseDown) {
-            object.move(mouseMove[0] * deltaTime * this.moveSpeed, mouseMove[1] * deltaTime * -this.moveSpeed, 0);
+            object.localMove(mouseMove[0] * deltaTime * this.moveSpeed, mouseMove[1] * deltaTime * -this.moveSpeed, 0);
         }
         else if (this.rightMouseDown) {
-            object.rotate(mouseMove[1] * deltaTime * this.rotateSpeed, mouseMove[0] * deltaTime * this.rotateSpeed, 0);
+            object.localRotate(mouseMove[1] * deltaTime * this.rotateSpeed, mouseMove[0] * deltaTime * this.rotateSpeed, 0);
         }
         else if (this.middleMouseDown) {
+            object.localRotate(0, 0, mouseMove[0] * deltaTime * this.rotateSpeed);
         }
-        object.move(0, 0, mouseMove[2] * deltaTime * -this.moveSpeed);
+        object.localMove(0, 0, mouseMove[2] * deltaTime * -this.moveSpeed);
     };
 }
 
@@ -515,7 +656,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _shaders_shaderMain_wgsl__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./shaders/shaderMain.wgsl */ "./src/shaders/shaderMain.wgsl");
 /* harmony import */ var _Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Objects/shapes/cube */ "./src/Objects/shapes/cube.ts");
 /* harmony import */ var _Objects_light__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./Objects/light */ "./src/Objects/light.ts");
-/* harmony import */ var _Objects_model__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./Objects/model */ "./src/Objects/model.ts");
+/* harmony import */ var _Objects_shapes_model__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./Objects/shapes/model */ "./src/Objects/shapes/model.ts");
+/* harmony import */ var _Objects_shapes_sphere__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./Objects/shapes/sphere */ "./src/Objects/shapes/sphere.ts");
+
 
 
 
@@ -543,7 +686,7 @@ class Renderer {
         this.canvas = canvas;
         this.objectMap = new Map();
     }
-    async initializeRenderer() {
+    async initialize() {
         if (navigator.gpu === undefined) {
             console.log("This browser/device doesn't support WebGPU...");
             return;
@@ -754,11 +897,11 @@ class Renderer {
         let objectCount = 0;
         let lightCount = 0;
         let lightArr = new Float32Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
-        scene.container.forEach((el) => {
+        scene.objects.forEach((el) => {
             if (el instanceof _Objects_camera__WEBPACK_IMPORTED_MODULE_0__.Camera && el.active) {
                 this.device.queue.writeBuffer(this.cameraBuffer, 0, el.update(), 0, 16);
             }
-            if (el instanceof _Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_2__.Cube) {
+            if (el instanceof _Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_2__.Cube || el instanceof _Objects_shapes_sphere__WEBPACK_IMPORTED_MODULE_5__.Sphere) {
                 let objVerts = el.getData();
                 let val = this.objectMap.get(el.id);
                 if (val === undefined) {
@@ -783,7 +926,7 @@ class Renderer {
                 renderPass.draw(objVerts.numVerticies);
                 objectCount += 1;
             }
-            if (el instanceof _Objects_model__WEBPACK_IMPORTED_MODULE_4__.Model) {
+            if (el instanceof _Objects_shapes_model__WEBPACK_IMPORTED_MODULE_4__.Model) {
                 let objVerts = el.getData();
                 if (objVerts === undefined) {
                     return;
@@ -818,7 +961,7 @@ class Renderer {
                 lightCount += 1;
             }
         });
-        // renderPass.draw(6);
+        renderPass.draw(6);
         renderPass.end();
         const commandBuffer = encoder.finish();
         this.device.queue.submit([commandBuffer]);
@@ -840,17 +983,27 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   Scene: () => (/* binding */ Scene)
 /* harmony export */ });
 class Scene {
-    container;
-    constructor(camera) {
-        if (camera === undefined) {
-            this.container = new Array();
-        }
-        else {
-            this.container = new Array(camera);
+    objects;
+    objectLookup;
+    constructor() {
+        this.objects = new Array();
+        this.objectLookup = new Map();
+    }
+    addObjects(...objects) {
+        for (let object of objects) {
+            if (this.objectLookup.has(object.hashCode()))
+                continue;
+            this.objects.push(object);
+            this.objectLookup.set(object.hashCode(), object);
         }
     }
-    add(...object) {
-        this.container.push(...object);
+    removeObjects(...objects) {
+        for (let object of objects) {
+            if (!this.objectLookup.has(object.hashCode()))
+                continue;
+            this.objectLookup.delete(object.hashCode());
+            this.objects = this.objects.splice(this.objects.indexOf(object));
+        }
     }
 }
 
@@ -867,7 +1020,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("struct Camera {\r\n    matrix: mat4x4f,\r\n};\r\n\r\nstruct VertexOutput {\r\n    @builtin(position) position: vec4f,\r\n    @location(0) normal: vec3f,\r\n};\r\n\r\n// Bind group for world\r\n@group(0) @binding(0) var<uniform> cam: Camera;\r\n@group(0) @binding(1) var<uniform> light: array<vec3f, 3>;\r\n\r\n// Bind group for objects\r\n@group(1) @binding(0) var<uniform> objTran: mat4x4f;\r\n@group(1) @binding(1) var<uniform> color: vec4f;\r\n\r\n@vertex\r\nfn vert(\r\n    @location(0) position: vec4f,\r\n    @location(1) normal: vec3f,\r\n    @builtin(vertex_index) vertIndex: u32\r\n) -> VertexOutput {\r\n    var vsOut: VertexOutput;\r\n    vsOut.position = cam.matrix * objTran * position;\r\n    vsOut.normal = (objTran * vec4f(normal, 0)).xyz;\r\n    return vsOut;\r\n}\r\n\r\n@fragment\r\nfn frag(vsOut: VertexOutput) -> @location(0) vec4f {\r\n    let normal = normalize(vsOut.normal);\r\n    var lgh: f32;\r\n    for (var i = 0; i < 3; i++) {\r\n        let dp = dot(normal, -light[i]);\r\n        if dp > 0 {\r\n            lgh += dot(normal, -light[i]); // Num between 0..1\r\n        }\r\n    }\r\n    if lgh < 0.2 { // Adjust min shadow\r\n        lgh = 0.2;\r\n    }\r\n    let col = color.rgb * lgh; // Multiply only color (not alpha)\r\n    return vec4f(col, color.a);\r\n    // return color; \r\n    // return vec4f(0.8, 0.5, 0.2, 1);\r\n}\r\n");
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("struct Camera {\r\n    matrix: mat4x4f,\r\n};\r\n\r\nstruct VertexOutput {\r\n    @builtin(position) position: vec4f,\r\n    @location(0) normal: vec3f,\r\n};\r\n\r\n// Bind group for world\r\n@group(0) @binding(0) var<uniform> camera: Camera;\r\n@group(0) @binding(1) var<uniform> light: array<vec3f, 3>;\r\n\r\n// Bind group for objects\r\n@group(1) @binding(0) var<uniform> objTran: mat4x4f;\r\n@group(1) @binding(1) var<uniform> color: vec4f;\r\n\r\n@vertex\r\nfn vert(\r\n    @location(0) position: vec4f,\r\n    @location(1) normal: vec3f,\r\n    @builtin(vertex_index) vertIndex: u32\r\n) -> VertexOutput {\r\n    var vsOut: VertexOutput;\r\n    vsOut.position = camera.matrix * objTran * position;\r\n    vsOut.normal = (objTran * vec4f(normal, 0)).xyz;\r\n    return vsOut;\r\n}\r\n\r\n@fragment\r\nfn frag(vsOut: VertexOutput) -> @location(0) vec4f {\r\n    let normal = normalize(vsOut.normal);\r\n    var lgh: f32;\r\n    for (var i = 0; i < 3; i++) {\r\n        let dp = dot(normal, -light[i]);\r\n        if dp > 0 {\r\n            lgh += dot(normal, -light[i]); // Num between 0..1\r\n        }\r\n    }\r\n    if lgh < 0.2 { // Adjust min shadow\r\n        lgh = 0.2;\r\n    }\r\n    let col = color.rgb * lgh; // Multiply only color (not alpha)\r\n    return vec4f(col, color.a);\r\n    // return color; \r\n    // return vec4f(0.8, 0.5, 0.2, 1);\r\n}\r\n");
 
 /***/ }),
 

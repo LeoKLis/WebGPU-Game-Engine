@@ -1,41 +1,35 @@
 import { Mat4, Vec3, Vec4, mat4, vec3, vec4 } from "wgpu-matrix";
-import { IObject } from "../../interfaces/IObject";
-import { IShape } from "../../interfaces/IShape"
+import { Object, ObjectDescriptor } from "../object";
 
-export class Cube implements IObject, IShape {
-    public id: string;
-    public name: string;
-    public position: Vec3;
-    public rotation: Vec3;
-    public scale: Vec3;
+export interface CubeDescriptor extends ObjectDescriptor {
+    size: [number, number, number];
+    color: [number, number, number, number];
+}
 
-    private positionMatrix: Mat4;
-    private rotationMatrix: Mat4;
-    private scaleMatrix: Mat4;
-
+export class Cube extends Object{
     public color: Vec4;
+    private vertices: Float32Array;
 
-    private positions: Float32Array;
-    public vertexData: Float32Array;
-    public indexData: Uint16Array;
-    public normalsData: Float32Array;
+    constructor(
+        cubeDescriptor: CubeDescriptor
+    ) {
+        super(cubeDescriptor);
+        this.color = vec4.create(...cubeDescriptor.color);
+        this.vertices = this.initVertices();
+    }
 
-    constructor(name: string, position: [number, number, number], rotation: [number, number, number], scale: [number, number, number], color: [number, number, number, number]) {
-        this.name = name;
-        this.position = vec3.create(...position);
-        this.rotation = vec3.create(...rotation);
-        this.scale = vec3.create(...scale);
+    public getData() {
+        let outMat = mat4.multiply(mat4.multiply(this.positionMatrix, this.rotationMatrix), this.scaleMatrix);
+        return {
+            vertexData: this.vertices,
+            numVerticies: 36,
+            objectMatrix: outMat,
+            color: this.color.buffer,
+        };
+    }
 
-        this.positionMatrix = mat4.translate(mat4.identity(), this.position);
-        this.rotationMatrix = mat4.identity();
-        this.scaleMatrix = mat4.scale(mat4.identity(), scale);
-
-        this.color = vec4.create(...color);
-
-        let d = new Date();
-        this.id = d.getTime().toString() + this.name;
-
-        this.positions = new Float32Array([
+    private initVertices() : Float32Array {
+        let vertices = new Float32Array([
             -0.5, 0.5, 0.5, // front face
             -0.5, -0.5, 0.5,
             0.5, 0.5, 0.5,
@@ -62,7 +56,7 @@ export class Cube implements IObject, IShape {
             0.5, 0.5, -0.5
         ]);
 
-        this.normalsData = new Float32Array([
+        let normalsData = new Float32Array([
             0, 0, 1, // Front
             1, 0, 0, // Right
             0, 0, -1, // Back
@@ -71,7 +65,7 @@ export class Cube implements IObject, IShape {
             0, 1, 0 // Top
         ]);
 
-        this.indexData = new Uint16Array([
+        let indexData = new Uint16Array([
             0, 1, 2, 2, 1, 3,  // front
             4, 5, 6, 6, 5, 7,  // right
             8, 9, 10, 10, 9, 11,  // back
@@ -80,45 +74,20 @@ export class Cube implements IObject, IShape {
             20, 21, 22, 22, 21, 23,  // top
         ]);
 
-        this.vertexData = new Float32Array(this.indexData.length * 6);
+        let out = new Float32Array(indexData.length * 6);
 
-        for (let i = 0; i < this.indexData.length; i++){
-            const positionIdx = this.indexData[i] * 3;
-            const position = this.positions.slice(positionIdx, positionIdx + 3);
+        for (let i = 0; i < indexData.length; i++){
+            const positionIdx = indexData[i] * 3;
+            const position = vertices.slice(positionIdx, positionIdx + 3);
             
-            this.vertexData.set(position, i * 6);
+            out.set(position, i * 6);
 
             const quadIdx = (i / 6 | 0) * 3;
-            const normal = this.normalsData.slice(quadIdx, quadIdx + 3);
+            const normal = normalsData.slice(quadIdx, quadIdx + 3);
             
-            this.vertexData.set(normal, i * 6 + 3);
+            out.set(normal, i * 6 + 3);
         }
 
+        return out;
     }
-
-    public move = (x: number, y: number, z: number) => {
-        let tranVec = vec3.create(x, y, z);
-        mat4.translate(this.positionMatrix, tranVec, this.positionMatrix);
-    }
-
-    public rotate = (degX: number, degY: number, degZ: number) => {
-        let radX = degX * 180 / Math.PI;
-        let radY = degY * 180 / Math.PI;
-        let radZ = degZ * 180 / Math.PI;
-
-        this.rotation[0] += radY;
-        this.rotation[1] += radX;
-        mat4.rotateX(mat4.rotationY(this.rotation[0]), this.rotation[1], this.rotationMatrix);
-    }
-
-    public getData = () => {
-        let outMat = mat4.multiply(mat4.multiply(this.positionMatrix, this.rotationMatrix), this.scaleMatrix);
-        return {
-            vertexData: this.vertexData,
-            numVerticies: this.indexData.length,
-            objectMatrix: outMat,
-            color: this.color.buffer,
-        };
-    }
-
 }

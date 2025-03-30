@@ -20,6 +20,7 @@
     "@types/node": "^22.7.7",
     "@types/object-hash": "^3.0.6",
     "@webgpu/types": "^0.1.49",
+    "crypto": "^1.0.1",
     "css-loader": "^7.1.2",
     "jquery": "^3.7.1",
     "mathjs": "^14.0.0",

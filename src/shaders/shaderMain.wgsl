@@ -8,7 +8,7 @@ struct VertexOutput {
 };
 
 // Bind group for world
-@group(0) @binding(0) var<uniform> cam: Camera;
+@group(0) @binding(0) var<uniform> camera: Camera;
 @group(0) @binding(1) var<uniform> light: array<vec3f, 3>;
 
 // Bind group for objects
@@ -22,7 +22,7 @@ fn vert(
     @builtin(vertex_index) vertIndex: u32
 ) -> VertexOutput {
     var vsOut: VertexOutput;
-    vsOut.position = cam.matrix * objTran * position;
+    vsOut.position = camera.matrix * objTran * position;
     vsOut.normal = (objTran * vec4f(normal, 0)).xyz;
     return vsOut;
 }

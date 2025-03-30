@@ -108,14 +108,16 @@ export class InputHandler {
         })
 
         let mouseMove = this.getMouseMovement();
+        
         if (this.leftMouseDown) {
-            object.move(mouseMove[0] * deltaTime * this.moveSpeed, mouseMove[1] * deltaTime * -this.moveSpeed, 0);
+            object.localMove(mouseMove[0] * deltaTime * this.moveSpeed, mouseMove[1] * deltaTime * -this.moveSpeed, 0);
         }
         else if (this.rightMouseDown) {
-            object.rotate(mouseMove[1] * deltaTime * this.rotateSpeed, mouseMove[0] * deltaTime * this.rotateSpeed, 0);
+            object.localRotate(mouseMove[1] * deltaTime * this.rotateSpeed, mouseMove[0] * deltaTime * this.rotateSpeed, 0);
         } 
         else if (this.middleMouseDown) {
+            object.localRotate(0, 0, mouseMove[0] * deltaTime * this.rotateSpeed);
         }
-        object.move(0, 0, mouseMove[2] * deltaTime * -this.moveSpeed);
+        object.localMove(0, 0, mouseMove[2] * deltaTime * -this.moveSpeed);
     }
 }

@@ -2,9 +2,9 @@ import { Camera } from "./Objects/camera";
 import { Scene } from "./scene";
 import shader from "./shaders/shaderMain.wgsl";
 import { Cube } from "./Objects/shapes/cube";
-import { setRenderPassDescriptor } from "./helpers"
 import { Light } from "./Objects/light";
-import { Model } from "./Objects/model";
+import { Model } from "./Objects/shapes/model";
+import { Sphere } from "./Objects/shapes/sphere";
 
 export class Renderer {
     private canvas: HTMLCanvasElement;
@@ -37,7 +37,7 @@ export class Renderer {
         this.objectMap = new Map<String, GPUBuffer>();
     }
 
-    public async initializeRenderer() {
+    public async initialize() {
         if (navigator.gpu === undefined) {
             console.log("This browser/device doesn't support WebGPU...");
             return;
@@ -264,11 +264,11 @@ export class Renderer {
         let objectCount = 0;
         let lightCount = 0;
         let lightArr = new Float32Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
-        scene.container.forEach((el) => {
+        scene.objects.forEach((el) => {
             if (el instanceof Camera && el.active) {
                 this.device.queue.writeBuffer(this.cameraBuffer, 0, el.update(), 0, 16);
             }
-            if (el instanceof Cube) {
+            if (el instanceof Cube || el instanceof Sphere) {
                 let objVerts = el.getData();
                 let val = this.objectMap.get(el.id);
                 if (val === undefined) {
@@ -337,7 +337,7 @@ export class Renderer {
                 lightCount += 1;
             }
         });
-        // renderPass.draw(6);
+        renderPass.draw(6);
         renderPass.end();
 
         const commandBuffer = encoder.finish();
