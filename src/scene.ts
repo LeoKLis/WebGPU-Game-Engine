@@ -1,27 +1,38 @@
-import { Object } from "./Objects/object";
+import { Camera } from "./Objects/camera";
+import { Light } from "./Objects/light";
+// import { Object } from "./Objects/object";
+import { Shape } from "./Objects/shapes/shape";
+import { Vector } from "./Objects/vector";
 
 export class Scene {
-    public objects: Array<Object>;
-    private objectLookup: Map<number, Object>;
+    public shapes: Array<Shape>;
+    public vectors: Array<Vector>;
+    public light!: Light;
+    public camera!: Camera;
     
     public constructor() {
-        this.objects = new Array<Object>();
-        this.objectLookup = new Map<number, Object>();
+        this.shapes = new Array<Shape>();
+        this.vectors = new Array<Vector>();
     }
 
-    public addObjects(...objects: Object[]) {
-        for (let object of objects) {
-            if (this.objectLookup.has(object.hashCode())) continue;
-            this.objects.push(object);
-            this.objectLookup.set(object.hashCode(), object);
+    public addShapes(...shapes: Shape[]) {
+        for (let shape of shapes) {
+            if (this.shapes.includes(shape)) continue;
+            this.shapes.push(shape);
         }
     }
 
-    public removeObjects(...objects: Object[]) {
-        for (let object of objects) {
-            if (!this.objectLookup.has(object.hashCode())) continue;
-            this.objectLookup.delete(object.hashCode());
-            this.objects = this.objects.splice(this.objects.indexOf(object));
+    public removeShapes(...shapes: Shape[]) {
+        for (let shape of shapes) {
+            this.shapes = this.shapes.splice(this.shapes.indexOf(shape));
         }
+    }
+
+    public setLight(light: Light) {
+        this.light = light;
+    }
+
+    public setCamera(camera: Camera) {
+        this.camera = camera;
     }
 }

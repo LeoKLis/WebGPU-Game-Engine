@@ -1,46 +1,40 @@
 import { mat4, vec3, vec4, Vec4 } from "wgpu-matrix";
-import { Object, ObjectDescriptor } from "../object";
+import { Shape, ShapeDescriptor } from "./shape";
 
-export interface SphereDescriptor extends ObjectDescriptor {
+export interface SphereDescriptor extends ShapeDescriptor {
     radius: number,
-    color: [number, number, number, number];
 }
 
-export class Sphere extends Object {
-    public color: Vec4;
+export class Sphere extends Shape {
     private radius: number;
-    private vertices: Float32Array;
+    protected sizeMatrix: Float32Array;
+    protected vertices: Float32Array;
 
     constructor(sphereDescriptor: SphereDescriptor) {
         super(sphereDescriptor);
-        this.color = vec4.create(...sphereDescriptor.color);
+
         this.radius = sphereDescriptor.radius;
-        this.size[0] = this.radius;
-        this.size[1] = this.radius;
-        this.size[2] = this.radius;
+        this.sizeMatrix = mat4.identity();
+        this.setRadius(this.radius);
 
-        this.vertices = this.initVertices(this.radius, 20, 20);
-    }
-
-    public getData() {
-        let outMat = mat4.multiply(mat4.multiply(this.positionMatrix, this.rotationMatrix), this.scaleMatrix);
-        return {
-            vertexData: this.vertices,
-            numVerticies: this.vertices.length / 6,
-            objectMatrix: outMat,
-            color: this.color.buffer,
-        };
+        this.vertices = this.initVertices(this.radius, 16, 16);
     }
 
     public setRadius(radius: number) : void {
-        this.size[0] = radius;
-        this.size[1] = radius;
-        this.size[2] = radius;
-        mat4.scaling([radius, radius, radius], this.scaleMatrix);
+        this.radius = radius;
+        mat4.scale(this.sizeMatrix, [radius, radius, radius], this.sizeMatrix);
     }
 
     public getRadius() : number{
-        return this.size[0];
+        return this.radius;
+    }
+    
+    public getNormal(x: number, y: number, z: number) {
+        // console.log(vec3.create(x, y, z));
+        // console.log(this.position);
+        // console.log(vec3.subtract(vec3.create(x, y, z), this.position));
+        // console.log(vec3.subtract(this.position, vec3.create(x, y, z)));
+        return vec3.normalize(vec3.subtract(vec3.create(x, y, z), this.position));
     }
 
     private initVertices(radius: number, latSegments: number, lonSegments: number): Float32Array {
@@ -52,11 +46,23 @@ export class Sphere extends Object {
             const theta = (lat * Math.PI) / latSegments; // Latitude angle (0 to π)
             const sinTheta = Math.sin(theta);
             const cosTheta = Math.cos(theta);
+            let v: number;
+            if (this.texture === undefined) {
+                v = lat / latSegments;
+            } else {
+                v = (lat / latSegments + this.texture.indexY) / this.texture.atlas.colElements;
+            }
 
             for (let lon = 0; lon <= lonSegments; lon++) {
                 const phi = (lon * 2 * Math.PI) / lonSegments; // Longitude angle (0 to 2π)
                 const sinPhi = Math.sin(phi);
                 const cosPhi = Math.cos(phi);
+                let u: number;
+                if (this.texture === undefined) {
+                    u = 1 - lon / lonSegments;
+                } else {
+                    u = (1 - lon / lonSegments + this.texture?.indexX) / this.texture?.atlas.rowElements;
+                }
 
                 // Compute vertex position
                 const x = cosPhi * sinTheta;
@@ -64,7 +70,7 @@ export class Sphere extends Object {
                 const z = sinPhi * sinTheta;
 
                 // Store as an array entry
-                vertexMap.push([radius * x, radius * y, radius * z, x, y, z]); // Position + Normal
+                vertexMap.push([radius * x, radius * y, radius * z, x, y, z, u, v]); // Position + Normal + UV
             }
         }
 
@@ -78,9 +84,11 @@ export class Sphere extends Object {
 
                 // First triangle (i0, i2, i1)
                 data.push(...vertexMap[i0], ...vertexMap[i2], ...vertexMap[i1]);
+                // data.push(...vertexMap[i0], ...vertexMap[i1], ...vertexMap[i2]);
 
                 // Second triangle (i1, i2, i3)
                 data.push(...vertexMap[i1], ...vertexMap[i2], ...vertexMap[i3]);
+                // data.push(...vertexMap[i1], ...vertexMap[i2], ...vertexMap[i3]);
             }
         }
 

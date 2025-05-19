@@ -1,43 +1,50 @@
 import { Camera } from "./Objects/camera";
 import { Scene } from "./scene";
-import shader from "./shaders/shaderMain.wgsl";
 import { Cube } from "./Objects/shapes/cube";
 import { Light } from "./Objects/light";
 import { Model } from "./Objects/shapes/model";
 import { Sphere } from "./Objects/shapes/sphere";
+
+import { RenderDataDescriptor } from "./Objects/shapes/shape";
+
+import objColorShader from "./shaders/objColorShader.wgsl";
+import objTextureShader from "./shaders/objTextureShader.wgsl";
+import debugShader from "./shaders/debugShader.wgsl";
+import { TextureAtlas } from "./textureAtlas";
 
 export class Renderer {
     private canvas: HTMLCanvasElement;
     private device!: GPUDevice;
     private context!: GPUCanvasContext;
     private presentationFormat!: GPUTextureFormat;
-    private renderPipeline!: GPURenderPipeline;
+    private colorRenderPipeline!: GPURenderPipeline;
+    private textureRenderPipeline!: GPURenderPipeline;
+    private debugRenderPipeline!: GPURenderPipeline;
     private renderPassDescriptor!: GPURenderPassDescriptor;
 
     private multisamlpeTexture!: GPUTexture;
-    
+
     private renderTarget!: GPUTexture;
     private renderTargetView!: GPUTextureView;
 
-    private cameraBindGroup!: GPUBindGroup;
-    private objectBindGroup!: GPUBindGroup;
-
     private cameraBuffer!: GPUBuffer;
     private lightBuffer!: GPUBuffer;
+    private objectsBindGroup!: GPUBindGroup;
 
-    private objTransformationBuffer!: GPUBuffer;
-    private colorBuffer!: GPUBuffer;
-
-    private isMultisampled = true;
-
-    private objectMap: Map<String, GPUBuffer>;
+    private shapesMatrixBuffer!: GPUBuffer;
+    private shapesColorBuffer!: GPUBuffer;
+    private shapesTextureBuffer!: GPUTexture;
+    private debugColorBuffer!: GPUBuffer;
+    private sampler!: GPUSampler;
+    private shapesColorBindGroup!: GPUBindGroup;
+    private shapesTextureBindGroup!: GPUBindGroup;
+    private debugBindGroup!: GPUBindGroup;
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
-        this.objectMap = new Map<String, GPUBuffer>();
     }
 
-    public async initialize() {
+    public async initialize(textureAtlas: TextureAtlas) {
         if (navigator.gpu === undefined) {
             console.log("This browser/device doesn't support WebGPU...");
             return;
@@ -45,6 +52,7 @@ export class Renderer {
 
         // Get device
         let adapter = await navigator.gpu.requestAdapter();
+        console.log(adapter);
         this.device = await adapter!.requestDevice();
         if (this.device === undefined) {
             console.log("Couldn't load device (not supported)");
@@ -60,12 +68,13 @@ export class Renderer {
             alphaMode: 'premultiplied'
         });
 
+        // Set canvas size
         this.canvas.width = this.canvas.clientWidth * window.devicePixelRatio;
         this.canvas.height = this.canvas.clientHeight * window.devicePixelRatio;
 
         // ========== Create bind group layouts ==========
-        const cameraBindGroupLayoutDescriptor: GPUBindGroupLayoutDescriptor = {
-            label: 'Camera bind group layout desc',
+        const objectsBindGroupLayoutDescriptor: GPUBindGroupLayoutDescriptor = {
+            label: 'Objects bind group layout desc',
             entries: [
                 {
                     binding: 0,
@@ -84,10 +93,11 @@ export class Renderer {
                     },
                 },
             ]
-        };  
-        const cameraBindGroupLayout = this.device.createBindGroupLayout(cameraBindGroupLayoutDescriptor);
+        };
+        const objectsBindGroupLayout = this.device.createBindGroupLayout(objectsBindGroupLayoutDescriptor);
 
-        const objectBindGroupLayoutDescriptor: GPUBindGroupLayoutDescriptor = {
+        const shapesColorBindGroupLayoutDescriptor: GPUBindGroupLayoutDescriptor = {
+            label: 'Shapes bind group layout descriptor',
             entries: [
                 {
                     binding: 0,
@@ -95,7 +105,7 @@ export class Renderer {
                     buffer: {
                         type: 'uniform',
                         hasDynamicOffset: true,
-                    }
+                    },
                 },
                 {
                     binding: 1,
@@ -103,57 +113,176 @@ export class Renderer {
                     buffer: {
                         type: 'uniform',
                         hasDynamicOffset: true,
-                    }
+                    },
                 },
-
             ]
         }
-        const objectBindGroupLayout = this.device.createBindGroupLayout(objectBindGroupLayoutDescriptor);
+        const shapesColorBindGroupLayout = this.device.createBindGroupLayout(shapesColorBindGroupLayoutDescriptor);
 
-        // ========== Create render pipeline ==========
-        const shaderModule = this.device.createShaderModule({ code: shader });
-        const renderPipelineDescriptor: GPURenderPipelineDescriptor = {
-            label: 'Default render pipeline',
-            layout: this.device.createPipelineLayout({ bindGroupLayouts: [cameraBindGroupLayout, objectBindGroupLayout] }),
+        const shapesTextureBindGroupLayoutDescriptor: GPUBindGroupLayoutDescriptor = {
+            label: 'Shapes texture bind group layout',
+            entries: [
+                {
+                    binding: 0,
+                    visibility: GPUShaderStage.VERTEX,
+                    buffer: {
+                        type: 'uniform',
+                        hasDynamicOffset: true,
+                    },
+                },
+                {
+                    binding: 1,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    sampler: {
+                        type: 'filtering',
+                    },
+                },
+                {
+                    binding: 2,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    texture: {
+                        sampleType: 'float',
+                        viewDimension: '2d',
+                        multisampled: false,
+                    },
+                },
+            ]
+        }
+        const shapesTextureBindGroupLayout = this.device.createBindGroupLayout(shapesTextureBindGroupLayoutDescriptor);
+
+        // ========== Create render pipeline for solid colored objects ==========
+        const colorShaderModule = this.device.createShaderModule({ code: objColorShader });
+        const colorRenderPipelineDescriptor: GPURenderPipelineDescriptor = {
+            label: 'Color render pipeline',
+            layout: this.device.createPipelineLayout({ bindGroupLayouts: [objectsBindGroupLayout, shapesColorBindGroupLayout] }),
             vertex: {
-                module: shaderModule,
+                module: colorShaderModule,
                 buffers: [
                     {
-                        arrayStride: (3 + 3) * 4, // 3 vertex coords & 3 normals coords
+                        arrayStride: (3 + 3 + 2) * 4, // 3 vertex coords & 3 normals coords & 2 texture coords
                         attributes: [
                             { shaderLocation: 0, offset: 0, format: 'float32x3' },
                             { shaderLocation: 1, offset: 3 * 4, format: 'float32x3' },
+                            { shaderLocation: 2, offset: 6 * 4, format: 'float32x2' },
                         ]
                     }
                 ]
             },
             fragment: {
-                module: shaderModule,
+                module: colorShaderModule,
                 targets: [{ format: this.presentationFormat }]
+            },
+            primitive: {
+                topology: 'triangle-list'
             },
             depthStencil: {
                 format: 'depth24plus',
                 depthWriteEnabled: true,
                 depthCompare: 'less',
             },
-            multisample: {
-                count: this.isMultisampled ? 4 : 1,
-            },
+            multisample: { count: 4 },
         }
-        this.renderPipeline = this.device.createRenderPipeline(renderPipelineDescriptor);
+        this.colorRenderPipeline = this.device.createRenderPipeline(colorRenderPipelineDescriptor);
 
-        // ========== Camera Bind Group ==========
+        // ========= Create render pipeline for textured objects ============
+        const textureShaderModule = this.device.createShaderModule({ code: objTextureShader });
+        const textureRenderPipelineDescriptor: GPURenderPipelineDescriptor = {
+            label: 'Texture render pipeline',
+            layout: this.device.createPipelineLayout({ bindGroupLayouts: [objectsBindGroupLayout, shapesTextureBindGroupLayout] }),
+            vertex: {
+                module: textureShaderModule,
+                buffers: [
+                    {
+                        arrayStride: (3 + 3 + 2) * 4, // 3 vertex coords & 3 normals coords & 2 texture coords
+                        attributes: [
+                            { shaderLocation: 0, offset: 0, format: 'float32x3' },
+                            { shaderLocation: 1, offset: 3 * 4, format: 'float32x3' },
+                            { shaderLocation: 2, offset: 6 * 4, format: 'float32x2' },
+                        ]
+                    }
+                ]
+            },
+            fragment: {
+                module: textureShaderModule,
+                targets: [{ format: this.presentationFormat }]
+            },
+            primitive: {
+                topology: 'triangle-list'
+            },
+            depthStencil: {
+                format: 'depth24plus',
+                depthWriteEnabled: true,
+                depthCompare: 'less',
+            },
+            multisample: { count: 4 }
+        }
+        this.textureRenderPipeline = this.device.createRenderPipeline(textureRenderPipelineDescriptor);
+
+        const debugBindGroupLayoutDescriptor: GPUBindGroupLayoutDescriptor = {
+            label: 'Debug bind group layout descriptor',
+            entries: [
+                {
+                    binding: 0,
+                    visibility: GPUShaderStage.VERTEX,
+                    buffer: {
+                        type: 'uniform',
+                        hasDynamicOffset: false,
+                    },
+                },
+                {
+                    binding: 1,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    buffer: {
+                        type: 'uniform',
+                        hasDynamicOffset: true,
+                    },
+                },
+            ]
+        };
+        const debugBindGroupLayout = this.device.createBindGroupLayout(debugBindGroupLayoutDescriptor);
+
+        const debugShaderModule = this.device.createShaderModule({ code: debugShader });
+        const debugRenderPipelineDescriptor: GPURenderPipelineDescriptor = {
+            layout: this.device.createPipelineLayout({ bindGroupLayouts: [debugBindGroupLayout] }),
+            vertex: {
+                module: debugShaderModule,
+                buffers: [
+                    {
+                        arrayStride: 3 * 4,
+                        attributes: [
+                            { shaderLocation: 0, offset: 0, format: 'float32x3' },
+                        ]
+                    }
+                ]
+            },
+            fragment: {
+                module: debugShaderModule,
+                targets: [{ format: this.presentationFormat }]
+            },
+            primitive: {
+                topology: 'line-list'
+            },
+            depthStencil: {
+                format: 'depth24plus',
+                depthWriteEnabled: true,
+                depthCompare: 'less'
+            },
+            multisample: { count: 4 }
+        }
+        this.debugRenderPipeline = this.device.createRenderPipeline(debugRenderPipelineDescriptor);
+
+        // ========== Objects Bind Group ==========
         this.cameraBuffer = this.device.createBuffer({
             size: 4 * 4 * 4, // 4 x 4 float32 matrix
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         });
         this.lightBuffer = this.device.createBuffer({
             label: 'Meduspremnik za svjetlo',
-            size: 3 * 4 * 4,
+            size: 3 * 4 + 4,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         });
-        this.cameraBindGroup = this.device.createBindGroup({
-            layout: this.renderPipeline.getBindGroupLayout(0),
+        this.objectsBindGroup = this.device.createBindGroup({
+            layout: this.colorRenderPipeline.getBindGroupLayout(0),
             entries: [
                 {
                     binding: 0,
@@ -168,41 +297,85 @@ export class Renderer {
                     resource: {
                         buffer: this.lightBuffer,
                         offset: 0,
-                        size: 12 * 4,
+                        size: 3 * 4 + 4,
                     }
                 },
             ],
         });
 
-        // ========== Object Bind Group ==========
-        this.objTransformationBuffer = this.device.createBuffer({
-            size: 4 * 16 * 1024, 
-            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+        // ========== Shape bind group ==========
+        this.shapesMatrixBuffer = this.device.createBuffer({
+            label: 'Meduspremnik za matrice oblika',
+            size: 4 * 16 * 1024,
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         });
-        this.colorBuffer = this.device.createBuffer({
-            size: 4 * 4 * 1024, 
-            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+        this.shapesColorBuffer = this.device.createBuffer({
+            label: 'Meduspremnik za boje oblika',
+            size: 4 * 4 * 1024,
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         });
-        this.objectBindGroup = this.device.createBindGroup({
-            layout: this.renderPipeline.getBindGroupLayout(1),
+        this.shapesTextureBuffer = this.device.createTexture({
+            label: 'Meduspremnik za teksture oblika',
+            format: 'rgba8unorm',
+            size: [textureAtlas.image.width, textureAtlas.image.height],
+            usage: GPUTextureUsage.TEXTURE_BINDING |
+                GPUTextureUsage.COPY_DST |
+                GPUTextureUsage.RENDER_ATTACHMENT,
+        });
+        this.debugColorBuffer = this.device.createBuffer({
+            label: 'Meduspremnik za boje u debugu',
+            size: 4 * 4 * 1024,
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        })
+        this.sampler = this.device.createSampler({
+            addressModeU: 'repeat',
+            addressModeV: 'repeat',
+        })
+        this.shapesColorBindGroup = this.device.createBindGroup({
+            layout: this.colorRenderPipeline.getBindGroupLayout(1),
             entries: [
                 {
                     binding: 0,
                     resource: {
-                        buffer: this.objTransformationBuffer,
-                        offset: 0,
-                        size: 4 * 16,
+                        buffer: this.shapesMatrixBuffer,
+                        size: 16 * 4,
                     }
                 },
                 {
                     binding: 1,
                     resource: {
-                        buffer: this.colorBuffer,
-                        offset: 0,
+                        buffer: this.shapesColorBuffer,
                         size: 4 * 4,
                     }
+                }
+            ]
+        });
+        this.shapesTextureBindGroup = this.device.createBindGroup({
+            layout: this.textureRenderPipeline.getBindGroupLayout(1),
+            entries: [
+                {
+                    binding: 0,
+                    resource: {
+                        buffer: this.shapesMatrixBuffer,
+                        size: 16 * 4,
+                    }
                 },
-            ],
+                {
+                    binding: 1,
+                    resource: this.sampler,
+                }, {
+                    binding: 2,
+                    resource: this.shapesTextureBuffer.createView(),
+                },
+
+            ]
+        });
+        this.debugBindGroup = this.device.createBindGroup({
+            layout: this.debugRenderPipeline.getBindGroupLayout(0),
+            entries: [
+                { binding: 0, resource:  { buffer: this.cameraBuffer, size: 16 * 4 }},
+                { binding: 1, resource: { buffer: this.debugColorBuffer , size: 4 * 4} }
+            ]
         })
 
         // Prepare depth texture
@@ -210,18 +383,17 @@ export class Renderer {
             size: [this.context.getCurrentTexture().width, this.context.getCurrentTexture().height],
             format: 'depth24plus',
             usage: GPUTextureUsage.RENDER_ATTACHMENT,
-            sampleCount: this.isMultisampled ? 4 : 1
-        })
+            sampleCount: 4,
+        });
 
         // Initialize and set render pass descriptor
-        // this.renderPassDescriptor = setRenderPassDescriptor([0.2, 0.2, 0.2, 1], 'clear', 'store', depthTexture);
         this.renderPassDescriptor = {
             // @ts-ignore
             colorAttachments: [{
-                    clearValue: [0.2, 0.2, 0.2, 1],
-                    loadOp: 'clear',
-                    storeOp: 'store',
-                }
+                clearValue: [0.2, 0.2, 0.2, 1],
+                loadOp: 'clear',
+                storeOp: 'store',
+            }
             ],
             depthStencilAttachment: {
                 view: depthTexture.createView(),
@@ -232,12 +404,12 @@ export class Renderer {
         }
     }
 
-    public render = (scene: Scene, time: number) => {
+    public render(scene: Scene) {
         const canvasTexture = this.context.getCurrentTexture();
-        if(!this.multisamlpeTexture || 
+        if (!this.multisamlpeTexture ||
             this.multisamlpeTexture.width !== canvasTexture.width ||
-            this.multisamlpeTexture.height !== canvasTexture.height){
-            if (this.multisamlpeTexture){
+            this.multisamlpeTexture.height !== canvasTexture.height) {
+            if (this.multisamlpeTexture) {
                 this.multisamlpeTexture.destroy();
             }
             this.multisamlpeTexture = this.device.createTexture({
@@ -249,95 +421,68 @@ export class Renderer {
         }
 
         const encoder = this.device.createCommandEncoder({ label: 'Default encoder' });
-        // for (let el of this.renderPassDescriptor.colorAttachments) {
-        //     el!.view = this.multisamlpeTexture.createView();
-        //     el!.resolveTarget = canvasTexture.createView();
-        // }
         (this.renderPassDescriptor.colorAttachments as GPURenderPassColorAttachment[])[0].view = this.multisamlpeTexture.createView();
         (this.renderPassDescriptor.colorAttachments as GPURenderPassColorAttachment[])[0].resolveTarget = canvasTexture.createView();
 
         const renderPass = encoder.beginRenderPass(this.renderPassDescriptor);
-        renderPass.setPipeline(this.renderPipeline);
 
-        renderPass.setBindGroup(0, this.cameraBindGroup);
+        this.device.queue.writeBuffer(this.cameraBuffer, 0, scene.camera.getData());
+        this.device.queue.writeBuffer(this.lightBuffer, 0, scene.light.getData());
 
-        let objectCount = 0;
-        let lightCount = 0;
-        let lightArr = new Float32Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
-        scene.objects.forEach((el) => {
-            if (el instanceof Camera && el.active) {
-                this.device.queue.writeBuffer(this.cameraBuffer, 0, el.update(), 0, 16);
-            }
-            if (el instanceof Cube || el instanceof Sphere) {
-                let objVerts = el.getData();
-                let val = this.objectMap.get(el.id);
-                if (val === undefined) {
-                    console.log(`Create map entry for ${el.name}!`);
-                    let objBuffer = this.device.createBuffer({
-                        label: el.name,
-                        size: objVerts.vertexData.byteLength,
-                        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-                        mappedAtCreation: true,
-                    });
-                    let buffer = objBuffer.getMappedRange();
-                    let view = new Float32Array(buffer);
-                    view.set(objVerts.vertexData);
-                    
-                    objBuffer.unmap();
-                    val = objBuffer;
-                    this.objectMap.set(el.id, val);
-                }
-
-                this.device.queue.writeBuffer(this.objTransformationBuffer, objectCount * 256, objVerts.objectMatrix);
-                this.device.queue.writeBuffer(this.colorBuffer, objectCount * 256, objVerts.color);
-
-                renderPass.setVertexBuffer(0, val);
-                renderPass.setBindGroup(1, this.objectBindGroup, [objectCount * 256, objectCount * 256]);
-
-                renderPass.draw(objVerts.numVerticies);
-                objectCount += 1;
-            }
-            if (el instanceof Model) {
-                let objVerts = el.getData();
-                if (objVerts === undefined) {
-                    return;
-                }
-                let val = this.objectMap.get(el.id);
-                if (val === undefined) {
-                    console.log(`Create map entry for ${el.name}`);
-                    let objBuffer = this.device.createBuffer({
-                        label: el.name,
-                        size: 20352384,
-                        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-                        mappedAtCreation: true,
-                    });
-                    let buffer = objBuffer.getMappedRange();
-                    let view = new Float32Array(buffer);
-                    view.set(objVerts.vertexData);
-                    
-                    objBuffer.unmap();
-                    val = objBuffer;
-                    this.objectMap.set(el.id, val);
-                }
-
-                this.device.queue.writeBuffer(this.objTransformationBuffer, objectCount * 256, objVerts.objectMatrix);
-                this.device.queue.writeBuffer(this.colorBuffer, objectCount * 256, objVerts.color);
-
-                renderPass.setVertexBuffer(0, val);
-                renderPass.setBindGroup(1, this.objectBindGroup, [objectCount * 256, objectCount * 256]);
-
-                renderPass.draw(objVerts.numVerticies);
-                objectCount += 1;
-            }
-            if (el instanceof Light) {
-                let lightData = el.getData();
-                lightArr.set(lightData.orientation, lightCount * 4);
-
-                this.device.queue.writeBuffer(this.lightBuffer, 0, lightArr);
-                lightCount += 1;
-            }
+        scene.vectors.forEach((vec, idx) => {
+            renderPass.setBindGroup(0, this.debugBindGroup, [idx * 256]);
+            renderPass.setPipeline(this.debugRenderPipeline);
+            let pos = vec.getData();
+            const vertexBuffer = this.device.createBuffer({
+                label: 'Vertex buffer for debugging',
+                size: pos.data.byteLength,
+                usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            });
+            this.device.queue.writeBuffer(vertexBuffer, 0, pos.data);
+            this.device.queue.writeBuffer(this.debugColorBuffer, idx * 256, pos.color);
+            renderPass.setVertexBuffer(0, vertexBuffer);
+            renderPass.draw(2);
         });
-        renderPass.draw(6);
+
+        renderPass.setBindGroup(0, this.objectsBindGroup);
+
+        let offset = 0;
+        scene.shapes.forEach((shape) => {
+            let renderData = shape.getData();
+            // If image is not set, render with color
+            if (renderData.texture?.atlas.image === undefined) {
+                renderPass.setPipeline(this.colorRenderPipeline);
+                renderPass.setBindGroup(1, this.shapesColorBindGroup, [offset * 256, offset * 256]);
+                this.device.queue.writeBuffer(this.shapesMatrixBuffer, offset * 256, renderData.matrix);
+                this.device.queue.writeBuffer(this.shapesColorBuffer, offset * 256, renderData.color);
+            }
+            else {
+                renderPass.setPipeline(this.textureRenderPipeline);
+                renderPass.setBindGroup(1, this.shapesTextureBindGroup, [offset * 256]);
+                this.device.queue.writeBuffer(this.shapesMatrixBuffer, offset * 256, renderData.matrix);
+                this.device.queue.copyExternalImageToTexture(
+                    { source: renderData.texture.atlas.image },
+                    { texture: this.shapesTextureBuffer },
+                    {
+                        width: renderData.texture.atlas.image.width,
+                        height: renderData.texture.atlas.image.height,
+                    },
+                )
+            }
+
+            const vertexBuffer = this.device.createBuffer({
+                label: `Vertex buffer for ${renderData.name}`,
+                size: renderData.vertices.byteLength * 4,
+                usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            });
+            this.device.queue.writeBuffer(vertexBuffer, 0, renderData.vertices);
+            renderPass.setVertexBuffer(0, vertexBuffer);
+
+            renderPass.draw(renderData.numberVertices);
+
+            offset += 1;
+        });
+
         renderPass.end();
 
         const commandBuffer = encoder.finish();

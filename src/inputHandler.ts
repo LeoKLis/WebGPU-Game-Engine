@@ -1,32 +1,34 @@
 import { rotate } from "mathjs";
 import { IObject } from "./interfaces/IObject";
+import { Object } from "./Objects/object";
 
+export enum ControllerDevice {
+    mouse,
+    keyboard
+}
 
 export class InputHandler {
     private canvas: HTMLCanvasElement;
     private keysPressed: Map<String, boolean>;
+    private keyPress: Set<String>;
 
     private mouseDeltaX: number;
     private mouseDeltaY: number;
     private mouseScrollDelta: number;
 
-    private moveSpeed: number;
-    private rotateSpeed: number;
-
     private leftMouseDown: boolean;
     private middleMouseDown: boolean;
     private rightMouseDown: boolean;
 
-    constructor(canvas: HTMLCanvasElement, moveSpeed: number, rotateSpeed: number) {
+    constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
         this.keysPressed = new Map();
+        this.keyPress = new Set();
 
         this.mouseDeltaX = 0;
         this.mouseDeltaY = 0;
         this.mouseScrollDelta = 0;
 
-        this.moveSpeed = moveSpeed / 1000;
-        this.rotateSpeed = rotateSpeed / 1000;
         this.leftMouseDown = false;
         this.middleMouseDown = false;
         this.rightMouseDown = false;
@@ -74,8 +76,12 @@ export class InputHandler {
         })
     }
 
-    public getKeysPressed = () => {
+    public getKeysPressed() {
         return this.keysPressed;
+    }
+
+    public getKeyPress() {
+        return this.keyPress;
     }
 
     public getMouseMovement = () => {
@@ -86,38 +92,53 @@ export class InputHandler {
         return output;
     }
 
-    public defaultInputControls = (object: IObject, deltaTime: number) => {
-        let keyPressed = this.getKeysPressed();
-        keyPressed.forEach((val, key) => {
-            if (!val) return;
-            switch (key) {
-                case 'a':
-                    // object.move(this.moveSpeed * deltaTime, 0, 0);
-                    break;
-                case 'd':
-                    // object.move(-this.moveSpeed * deltaTime, 0, 0);
-                    break;
-                case 'w':
-                    // object.move(0, 0, this.moveSpeed * deltaTime);
-                    break;
-                case 's':
-                    // object.move(0, 0, -this.moveSpeed * deltaTime);
-                    break;
+    public control (object: Object, moveSpeed: number, rotateSpeed:number, deltaTime: number, device: ControllerDevice) {
+        let used = false;
+        if (device == ControllerDevice.keyboard) {
+            let keyPressed = this.getKeysPressed();
+            keyPressed.forEach((val, key) => {
+                if (!val) return;
+                used = true;
+                switch (key) {
+                    case 'a':
+                        object.globalRotate(0, rotateSpeed * deltaTime, 0);
+                        break;
+                    case 'd':
+                        object.globalRotate(0, -rotateSpeed * deltaTime, 0);
+                        break;
+                    case 'w':
+                        object.rotateAroundChild('x', -rotateSpeed * deltaTime);
+                        break;
+                    case 's':
+                        object.rotateAroundChild('x', rotateSpeed * deltaTime);
+                        break;
+                    case 'q':
+                        object.rotateAroundChild('z', rotateSpeed * deltaTime);
+                        break;
+                    case 'e':
+                        object.rotateAroundChild('z', -rotateSpeed * deltaTime);
+                        break;
+                }
+            });
+        }
 
+        if (device == ControllerDevice.mouse) {
+            let mouseMove = this.getMouseMovement();
+            if (this.leftMouseDown) {
+                object.globalMove(0, mouseMove[1] * deltaTime * -moveSpeed, 0);
+                object.localMove(mouseMove[0] * deltaTime * -moveSpeed, 0, 0);
+                used = true;
             }
-        })
-
-        let mouseMove = this.getMouseMovement();
-        
-        if (this.leftMouseDown) {
-            object.localMove(mouseMove[0] * deltaTime * this.moveSpeed, mouseMove[1] * deltaTime * -this.moveSpeed, 0);
+            else if (this.rightMouseDown) {
+                object.globalRotate(mouseMove[1] * deltaTime * rotateSpeed, mouseMove[0] * deltaTime * rotateSpeed, 0);
+                used = true;
+            }
+            else if (this.middleMouseDown) {
+                object.globalRotate(0, 0, mouseMove[0] * deltaTime * rotateSpeed);
+                used = true;
+            }
+            object.localMove(0, 0, mouseMove[2] * deltaTime * -moveSpeed);
         }
-        else if (this.rightMouseDown) {
-            object.localRotate(mouseMove[1] * deltaTime * this.rotateSpeed, mouseMove[0] * deltaTime * this.rotateSpeed, 0);
-        } 
-        else if (this.middleMouseDown) {
-            object.localRotate(0, 0, mouseMove[0] * deltaTime * this.rotateSpeed);
-        }
-        object.localMove(0, 0, mouseMove[2] * deltaTime * -this.moveSpeed);
+        return used;
     }
 }
