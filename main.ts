@@ -38,11 +38,24 @@ const cube = new Cube({
     position: [0, -1.5, 0],
     rotation: [0, 0, 0],
     lenght: [5, 1, 100],
+    // texture: {
+    //     atlas: textureAtlas,
+    //     indexX: 0,
+    //     indexY: 0,
+    // }
+});
+
+const sphere = new Sphere({
+    name: "Lopta",
+    id: "sphereID",
+    position: [0, 3, 0],
+    rotation: [0, 0, 0],
+    radius: 1,
     texture: {
         atlas: textureAtlas,
         indexX: 0,
         indexY: 0,
-    }
+    },
 });
 
 // const cube = new Cube({
@@ -76,19 +89,6 @@ const cube = new Cube({
 //     rotation: [-50, 0, 0],
 //     lenght: [10, 0.5, 5],
 // });
-
-const sphere = new Sphere({
-    name: "Lopta",
-    id: "sphereID",
-    position: [0, 3, 0],
-    rotation: [0, 0, 0],
-    radius: 1,
-    texture: {
-        atlas: textureAtlas,
-        indexX: 0,
-        indexY: 0,
-    },
-});
 
 const light = new Light({
     name: "Svijetlo",

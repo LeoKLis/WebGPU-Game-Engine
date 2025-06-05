@@ -19,12 +19,14 @@ export interface RenderDataDescriptor {
     numberVertices: number;
     matrix: Float32Array;
     color: Float32Array;
-    texture?: TextureDescriptor;
+    containsTexture: boolean;
+    // texture?: TextureDescriptor;
 }
 
 export abstract class Shape extends Object {
     color: Float32Array;
     texture?: TextureDescriptor;
+    containsTexture: boolean;
     // image?: ImageBitmap;
 
     protected abstract sizeMatrix: Float32Array;
@@ -34,6 +36,7 @@ export abstract class Shape extends Object {
         super(shapeDescriptor);
         this.color = shapeDescriptor.color !== undefined ? new Float32Array(shapeDescriptor.color) : new Float32Array([0.8, 0.5, 0.2, 1]);
         this.texture = shapeDescriptor.texture;
+        this.containsTexture = this.texture === undefined ? false : true;
     }
 
     protected abstract getNormal(x: number, y: number, z: number): Vec3;
@@ -50,7 +53,7 @@ export abstract class Shape extends Object {
             numberVertices: this.vertices.byteLength / 8,
             matrix: outMat,
             color: this.color,
-            texture: this.texture,
+            containsTexture: this.containsTexture,
         }
     }
 }

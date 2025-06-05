@@ -322,6 +322,14 @@ export class Renderer {
                 GPUTextureUsage.COPY_DST |
                 GPUTextureUsage.RENDER_ATTACHMENT,
         });
+        this.device.queue.copyExternalImageToTexture(
+            { source: textureAtlas.image },
+            { texture: this.shapesTextureBuffer },
+            {
+                width: textureAtlas.image.width,
+                height: textureAtlas.image.height,
+            },
+        )
         this.debugColorBuffer = this.device.createBuffer({
             label: 'Meduspremnik za boje u debugu',
             size: 4 * 4 * 1024,
@@ -450,7 +458,7 @@ export class Renderer {
         scene.shapes.forEach((shape) => {
             let renderData = shape.getData();
             // If image is not set, render with color
-            if (renderData.texture?.atlas.image === undefined) {
+            if (!renderData.containsTexture) {
                 renderPass.setPipeline(this.colorRenderPipeline);
                 renderPass.setBindGroup(1, this.shapesColorBindGroup, [offset * 256, offset * 256]);
                 this.device.queue.writeBuffer(this.shapesMatrixBuffer, offset * 256, renderData.matrix);
@@ -460,14 +468,6 @@ export class Renderer {
                 renderPass.setPipeline(this.textureRenderPipeline);
                 renderPass.setBindGroup(1, this.shapesTextureBindGroup, [offset * 256]);
                 this.device.queue.writeBuffer(this.shapesMatrixBuffer, offset * 256, renderData.matrix);
-                this.device.queue.copyExternalImageToTexture(
-                    { source: renderData.texture.atlas.image },
-                    { texture: this.shapesTextureBuffer },
-                    {
-                        width: renderData.texture.atlas.image.width,
-                        height: renderData.texture.atlas.image.height,
-                    },
-                )
             }
 
             const vertexBuffer = this.device.createBuffer({

@@ -54,11 +54,23 @@ const cube = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
     position: [0, -1.5, 0],
     rotation: [0, 0, 0],
     lenght: [5, 1, 100],
+    // texture: {
+    //     atlas: textureAtlas,
+    //     indexX: 0,
+    //     indexY: 0,
+    // }
+});
+const sphere = new _src_Objects_shapes_sphere__WEBPACK_IMPORTED_MODULE_6__.Sphere({
+    name: "Lopta",
+    id: "sphereID",
+    position: [0, 3, 0],
+    rotation: [0, 0, 0],
+    radius: 1,
     texture: {
         atlas: textureAtlas,
         indexX: 0,
         indexY: 0,
-    }
+    },
 });
 // const cube = new Cube({
 //     name: "Kocka",
@@ -88,18 +100,6 @@ const cube = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
 //     rotation: [-50, 0, 0],
 //     lenght: [10, 0.5, 5],
 // });
-const sphere = new _src_Objects_shapes_sphere__WEBPACK_IMPORTED_MODULE_6__.Sphere({
-    name: "Lopta",
-    id: "sphereID",
-    position: [0, 3, 0],
-    rotation: [0, 0, 0],
-    radius: 1,
-    texture: {
-        atlas: textureAtlas,
-        indexX: 0,
-        indexY: 0,
-    },
-});
 const light = new _src_Objects_light__WEBPACK_IMPORTED_MODULE_5__.Light({
     name: "Svijetlo",
     id: "svijetloID",
@@ -621,10 +621,12 @@ __webpack_require__.r(__webpack_exports__);
 class Shape extends _object__WEBPACK_IMPORTED_MODULE_0__.Object {
     color;
     texture;
+    containsTexture;
     constructor(shapeDescriptor) {
         super(shapeDescriptor);
         this.color = shapeDescriptor.color !== undefined ? new Float32Array(shapeDescriptor.color) : new Float32Array([0.8, 0.5, 0.2, 1]);
         this.texture = shapeDescriptor.texture;
+        this.containsTexture = this.texture === undefined ? false : true;
     }
     getScaleMatrix() {
         return this.sizeMatrix;
@@ -637,7 +639,7 @@ class Shape extends _object__WEBPACK_IMPORTED_MODULE_0__.Object {
             numberVertices: this.vertices.byteLength / 8,
             matrix: outMat,
             color: this.color,
-            texture: this.texture,
+            containsTexture: this.containsTexture,
         };
     }
 }
@@ -1291,6 +1293,10 @@ class Renderer {
                 GPUTextureUsage.COPY_DST |
                 GPUTextureUsage.RENDER_ATTACHMENT,
         });
+        this.device.queue.copyExternalImageToTexture({ source: textureAtlas.image }, { texture: this.shapesTextureBuffer }, {
+            width: textureAtlas.image.width,
+            height: textureAtlas.image.height,
+        });
         this.debugColorBuffer = this.device.createBuffer({
             label: 'Meduspremnik za boje u debugu',
             size: 4 * 4 * 1024,
@@ -1409,7 +1415,7 @@ class Renderer {
         scene.shapes.forEach((shape) => {
             let renderData = shape.getData();
             // If image is not set, render with color
-            if (renderData.texture?.atlas.image === undefined) {
+            if (!renderData.containsTexture) {
                 renderPass.setPipeline(this.colorRenderPipeline);
                 renderPass.setBindGroup(1, this.shapesColorBindGroup, [offset * 256, offset * 256]);
                 this.device.queue.writeBuffer(this.shapesMatrixBuffer, offset * 256, renderData.matrix);
@@ -1419,10 +1425,6 @@ class Renderer {
                 renderPass.setPipeline(this.textureRenderPipeline);
                 renderPass.setBindGroup(1, this.shapesTextureBindGroup, [offset * 256]);
                 this.device.queue.writeBuffer(this.shapesMatrixBuffer, offset * 256, renderData.matrix);
-                this.device.queue.copyExternalImageToTexture({ source: renderData.texture.atlas.image }, { texture: this.shapesTextureBuffer }, {
-                    width: renderData.texture.atlas.image.width,
-                    height: renderData.texture.atlas.image.height,
-                });
             }
             const vertexBuffer = this.device.createBuffer({
                 label: `Vertex buffer for ${renderData.name}`,
@@ -1525,7 +1527,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("struct Camera {\r\n    matrix: mat4x4f,\r\n};\r\n\r\nstruct VertexOutput {\r\n    @builtin(position) position: vec4f,\r\n};\r\n\r\n@group(0) @binding(0) var<uniform> camera: Camera;\r\n@group(0) @binding(1) var<uniform> color: vec3f;\r\n\r\n@vertex\r\nfn vert(\r\n    @location(0) position: vec4f,\r\n) -> VertexOutput {\r\n    var vsOut: VertexOutput;\r\n    vsOut.position = camera.matrix * position;\r\n    return vsOut;\r\n}\r\n\r\n@fragment\r\nfn frag() -> @location(0) vec4f {\r\n    return vec4f(color.rgb, 1);\r\n}\r\n");
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("struct Camera {\n    matrix: mat4x4f,\n};\n\nstruct VertexOutput {\n    @builtin(position) position: vec4f,\n};\n\n@group(0) @binding(0) var<uniform> camera: Camera;\n@group(0) @binding(1) var<uniform> color: vec3f;\n\n@vertex\nfn vert(\n    @location(0) position: vec4f,\n) -> VertexOutput {\n    var vsOut: VertexOutput;\n    vsOut.position = camera.matrix * position;\n    return vsOut;\n}\n\n@fragment\nfn frag() -> @location(0) vec4f {\n    return vec4f(color.rgb, 1);\n}\n");
 
 /***/ }),
 
@@ -1539,7 +1541,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("struct Camera {\r\n    matrix: mat4x4f,\r\n};\r\n\r\nstruct Light {\r\n    direction: vec3f,\r\n}\r\n\r\nstruct VertexOutput {\r\n    @builtin(position) position: vec4f,\r\n    @location(0) normal: vec3f,\r\n    @location(1) texcoord: vec2f,\r\n};\r\n\r\n// Bind group for world\r\n@group(0) @binding(0) var<uniform> camera: Camera;\r\n@group(0) @binding(1) var<uniform> light: Light;\r\n\r\n// Bind group for objects\r\n@group(1) @binding(0) var<uniform> objTran: mat4x4f;\r\n@group(1) @binding(1) var<uniform> color: vec4f;\r\n\r\n@vertex\r\nfn vert(\r\n    @location(0) position: vec4f,\r\n    @location(1) normal: vec3f,\r\n    @location(2) texcoord: vec2f,\r\n    @builtin(vertex_index) vertIndex: u32\r\n) -> VertexOutput {\r\n    var vsOut: VertexOutput;\r\n    vsOut.position = camera.matrix * objTran * position;\r\n    vsOut.normal = (objTran * vec4f(normal, 0)).xyz;\r\n    vsOut.texcoord = texcoord;\r\n    return vsOut;\r\n}\r\n\r\n@fragment\r\nfn frag(vsOut: VertexOutput) -> @location(0) vec4f {\r\n    let normal = normalize(vsOut.normal);\r\n    let lgh = max(dot(normal, -light.direction), 0.25);\r\n    let col = color.rgb * lgh; // Multiply only color (not alpha)\r\n    // let col = color.rgb; // Multiply only color (not alpha)\r\n    return vec4f(col, color.a);\r\n}\r\n");
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("struct Camera {\n    matrix: mat4x4f,\n};\n\nstruct Light {\n    direction: vec3f,\n}\n\nstruct VertexOutput {\n    @builtin(position) position: vec4f,\n    @location(0) normal: vec3f,\n    @location(1) texcoord: vec2f,\n};\n\n// Bind group for world\n@group(0) @binding(0) var<uniform> camera: Camera;\n@group(0) @binding(1) var<uniform> light: Light;\n\n// Bind group for objects\n@group(1) @binding(0) var<uniform> objTran: mat4x4f;\n@group(1) @binding(1) var<uniform> color: vec4f;\n\n@vertex\nfn vert(\n    @location(0) position: vec4f,\n    @location(1) normal: vec3f,\n    @location(2) texcoord: vec2f,\n    @builtin(vertex_index) vertIndex: u32\n) -> VertexOutput {\n    var vsOut: VertexOutput;\n    vsOut.position = camera.matrix * objTran * position;\n    vsOut.normal = (objTran * vec4f(normal, 0)).xyz;\n    vsOut.texcoord = texcoord;\n    return vsOut;\n}\n\n@fragment\nfn frag(vsOut: VertexOutput) -> @location(0) vec4f {\n    let normal = normalize(vsOut.normal);\n    let lgh = max(dot(normal, -light.direction), 0.25);\n    let col = color.rgb * lgh; // Multiply only color (not alpha)\n    // let col = color.rgb; // Multiply only color (not alpha)\n    return vec4f(col, color.a);\n}\n");
 
 /***/ }),
 
@@ -1553,7 +1555,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("struct Camera {\r\n    matrix: mat4x4f,\r\n};\r\n\r\nstruct Light {\r\n    direction: vec3f,\r\n}\r\n\r\nstruct VertexOutput {\r\n    @builtin(position) position: vec4f,\r\n    @location(0) normal: vec3f,\r\n    @location(1) texcoord: vec2f,\r\n};\r\n\r\n@group(0) @binding(0) var<uniform> camera: Camera;\r\n@group(0) @binding(1) var<uniform> light: Light;\r\n\r\n@group(1) @binding(0) var<uniform> objectTransform: mat4x4f;\r\n@group(1) @binding(1) var linSampler: sampler;\r\n@group(1) @binding(2) var tex: texture_2d<f32>;\r\n// @group(1) @binding(3) var<uniform> textureElements: vec2f;\r\n\r\n@vertex\r\nfn vert(\r\n    @location(0) position: vec4f,\r\n    @location(1) normal: vec3f,\r\n    @location(2) texcoord: vec2f,\r\n) -> VertexOutput {\r\n    var vsOut: VertexOutput;\r\n    vsOut.position = camera.matrix * objectTransform * position;\r\n    vsOut.normal = (objectTransform * vec4f(normal, 0)).xyz;\r\n    vsOut.texcoord = texcoord;\r\n    return vsOut;\r\n}\r\n\r\n\r\n@fragment\r\nfn frag(vsOut: VertexOutput) -> @location(0) vec4f {\r\n    let normal = normalize(vsOut.normal);\r\n    let texcolor = textureSample(tex, linSampler, vsOut.texcoord);\r\n    let lgh = max(dot(normal, -light.direction), 0.25);\r\n    let finalcolor = texcolor.rgb * lgh;\r\n    return vec4f(finalcolor, texcolor.a);\r\n}");
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("struct Camera {\n    matrix: mat4x4f,\n};\n\nstruct Light {\n    direction: vec3f,\n}\n\nstruct VertexOutput {\n    @builtin(position) position: vec4f,\n    @location(0) normal: vec3f,\n    @location(1) texcoord: vec2f,\n};\n\n@group(0) @binding(0) var<uniform> camera: Camera;\n@group(0) @binding(1) var<uniform> light: Light;\n\n@group(1) @binding(0) var<uniform> objectTransform: mat4x4f;\n@group(1) @binding(1) var linSampler: sampler;\n@group(1) @binding(2) var tex: texture_2d<f32>;\n// @group(1) @binding(3) var<uniform> textureElements: vec2f;\n\n@vertex\nfn vert(\n    @location(0) position: vec4f,\n    @location(1) normal: vec3f,\n    @location(2) texcoord: vec2f,\n) -> VertexOutput {\n    var vsOut: VertexOutput;\n    vsOut.position = camera.matrix * objectTransform * position;\n    vsOut.normal = (objectTransform * vec4f(normal, 0)).xyz;\n    vsOut.texcoord = texcoord;\n    return vsOut;\n}\n\n\n@fragment\nfn frag(vsOut: VertexOutput) -> @location(0) vec4f {\n    let normal = normalize(vsOut.normal);\n    let texcolor = textureSample(tex, linSampler, vsOut.texcoord);\n    let lgh = max(dot(normal, -light.direction), 0.25);\n    let finalcolor = texcolor.rgb * lgh;\n    return vec4f(finalcolor, texcolor.a);\n}");
 
 /***/ }),
 
