@@ -19,8 +19,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _src_Objects_shapes_sphere__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./src/Objects/shapes/sphere */ "./src/Objects/shapes/sphere.ts");
 /* harmony import */ var _src_collision__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./src/collision */ "./src/collision.ts");
 /* harmony import */ var _src_textureAtlas__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./src/textureAtlas */ "./src/textureAtlas.ts");
-/* harmony import */ var wgpu_matrix__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! wgpu-matrix */ "./node_modules/wgpu-matrix/dist/3.x/wgpu-matrix.module.js");
-/* harmony import */ var _src_Objects_vector__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./src/Objects/vector */ "./src/Objects/vector.ts");
+/* harmony import */ var wgpu_matrix__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! wgpu-matrix */ "./node_modules/wgpu-matrix/dist/3.x/wgpu-matrix.module.js");
 
 
 
@@ -31,39 +30,48 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-
+const gravitySpan = document.getElementById("gravityVal");
+const frictionSpan = document.getElementById("frictionVal");
+const angvelSpan = document.getElementById("angvelVal");
+const rollSpan = document.getElementById("rolldampVal");
+const jumpforceSpan = document.getElementById("jumpforceVal");
+let pinned = false;
+const sliders = document.getElementById("sliders");
+const pinBtn = document.getElementById("pin");
+pinBtn.addEventListener("click", () => {
+    if (pinned) {
+        // sliders.style.top = "-220px";
+        pinBtn.innerText = "Pin 📌";
+        pinned = false;
+    }
+    else {
+        pinBtn.innerText = "Unpin 📌";
+        pinned = true;
+    }
+    sliders.classList.toggle("pinned");
+});
 let textureAtlas = new _src_textureAtlas__WEBPACK_IMPORTED_MODULE_8__.TextureAtlas();
 // await textureAtlas.loadImage("./objects/pixil-frame-0.png", 3, 1);
 await textureAtlas.loadImage("./objects/2_no_clouds_8k (Medium).jpg", 1, 1);
 const canvas = window.document.getElementById("canvas");
 const renderer = new _src_renderer__WEBPACK_IMPORTED_MODULE_2__.Renderer(canvas);
-await renderer.initialize(textureAtlas);
+await renderer.initialize(textureAtlas, './objects/skybox/');
 const inputHandler = new _src_inputHandler__WEBPACK_IMPORTED_MODULE_1__.InputHandler(canvas);
 const scene = new _src_scene__WEBPACK_IMPORTED_MODULE_3__.Scene();
 const camera = new _src_Objects_camera__WEBPACK_IMPORTED_MODULE_0__.Camera({
     name: "Kamera",
     id: "kameraID",
-    position: [0, 5, -10],
-    rotation: [5, 180, 0],
+    position: [0, 7.5, -21],
+    rotation: [16, 180, 0],
     cameraType: _src_Objects_camera__WEBPACK_IMPORTED_MODULE_0__.CameraType.perspective,
-});
-// await textureAtlas.loadImage("./objects/dice_unwrap_reference.png", 1, 1);
-const cube = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
-    name: "Kocka",
-    id: "kockaID",
-    position: [0, -1.5, 0],
-    rotation: [0, 0, 0],
-    lenght: [5, 1, 100],
-    // texture: {
-    //     atlas: textureAtlas,
-    //     indexX: 0,
-    //     indexY: 0,
-    // }
+    fov: 60,
+    near: 0.1,
+    far: 300,
 });
 const sphere = new _src_Objects_shapes_sphere__WEBPACK_IMPORTED_MODULE_6__.Sphere({
     name: "Lopta",
     id: "sphereID",
-    position: [0, 3, 0],
+    position: [0, 3, -9],
     rotation: [0, 0, 0],
     radius: 1,
     texture: {
@@ -71,120 +79,192 @@ const sphere = new _src_Objects_shapes_sphere__WEBPACK_IMPORTED_MODULE_6__.Spher
         indexX: 0,
         indexY: 0,
     },
+    velocity: {
+        x: 0,
+        y: 0,
+        z: 0,
+    },
 });
-// const cube = new Cube({
-//     name: "Kocka",
-//     id: "kockaID",
-//     position: [0, 0, -2],
-//     rotation: [20, 0, 0],
-//     lenght: [10, 0.5, 10],
-// });
-// const cube2 = new Cube({
-//     name: "Kocka",
-//     id: "kockaID",
-//     position: [0, 0, 4],
-//     rotation: [-35, 0, 0],
-//     lenght: [10, 0.5, 10],
-// });
-// const cube3 = new Cube({
-//     name: "Kocka",
-//     id: "kockaID",
-//     position: [0, 5, 4],
-//     rotation: [20, 0, 0],
-//     lenght: [10, 0.5, 5],
-// });
-// const cube4 = new Cube({
-//     name: "Kocka",
-//     id: "kockaID",
-//     position: [0, 4, -2],
-//     rotation: [-50, 0, 0],
-//     lenght: [10, 0.5, 5],
-// });
+const cube = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
+    name: "Kocka",
+    id: "kockaID",
+    position: [0, 0, -11],
+    rotation: [0, 0, 0],
+    lenght: [10, 0.5, 10],
+    color: [0.3, 0.5, 0.8, 1],
+});
+const cube2 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
+    name: "Kocka",
+    id: "kockaID",
+    position: [0, 0, 15],
+    rotation: [0, 0, 0],
+    lenght: [10, 0.5, 10],
+    color: [0.3, 0.5, 0.8, 1],
+});
+const cube3 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
+    name: "Kocka",
+    id: "kockaID",
+    position: [15, -2, 8],
+    rotation: [0, 0, 0],
+    lenght: [10, 0.5, 15],
+    color: [0.3, 0.5, 0.8, 1],
+});
+const cube4 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
+    name: "Kocka",
+    id: "kockaID",
+    position: [0, 7, 27],
+    rotation: [-45, 0, 0],
+    lenght: [10, 0.5, 20],
+    color: [0.3, 0.5, 0.8, 1],
+});
+const cube5 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
+    name: "Kocka",
+    id: "kockaID",
+    position: [0, 14, 41],
+    rotation: [0, 0, 0],
+    lenght: [20, 0.5, 10],
+    color: [0.3, 0.5, 0.8, 1],
+});
+const cube6 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
+    name: "Kocka",
+    id: "kockaID",
+    position: [-17, 9, 41],
+    rotation: [0, 0, -20],
+    lenght: [10, 0.2, 10],
+    color: [0.3, 0.5, 0.8, 1],
+});
+const cube7 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
+    name: "Kocka",
+    id: "kockaID",
+    position: [0, -2, 35],
+    rotation: [-15, 0, 0],
+    lenght: [10, 0.5, 25],
+    color: [0.3, 0.5, 0.8, 1],
+});
+const cube8 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
+    name: "Kocka",
+    id: "kockaID",
+    position: [0, -10, 10],
+    rotation: [-8, 0, 0],
+    lenght: [2.5, 0.2, 25],
+    color: [0.3, 0.5, 0.8, 1],
+});
+const cube9 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
+    name: "Kocka",
+    id: "kockaID",
+    position: [-5, -10, 0],
+    rotation: [8, 0, 0],
+    lenght: [2.5, 0.2, 10],
+    color: [0.3, 0.5, 0.8, 1],
+});
+const cube10 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
+    name: "Kocka",
+    id: "kockaID",
+    position: [-4, -8, -15],
+    rotation: [0, 0, 0],
+    lenght: [6, 2, 6],
+    color: [0.3, 0.5, 0.8, 1],
+});
+const cube11 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
+    name: "Kocka",
+    id: "kockaID",
+    position: [4, -5, -24],
+    rotation: [0, 0, 0],
+    lenght: [6, 2, 6],
+    color: [0.3, 0.5, 0.8, 1],
+});
+const cube12 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
+    name: "Kocka",
+    id: "kockaID",
+    position: [14, -1, -15],
+    rotation: [0, 0, 0],
+    lenght: [6, 1, 6],
+    color: [0.3, 0.5, 0.8, 1],
+});
 const light = new _src_Objects_light__WEBPACK_IMPORTED_MODULE_5__.Light({
     name: "Svijetlo",
     id: "svijetloID",
     position: [0, 0, 0],
-    rotation: [-0.4, -0.8, -1],
+    rotation: [0.3, -0.7, 0.2],
 });
-const vectorX = new _src_Objects_vector__WEBPACK_IMPORTED_MODULE_9__.Vector({ color: [1, 0, 0] });
-const vectorY = new _src_Objects_vector__WEBPACK_IMPORTED_MODULE_9__.Vector({ color: [0, 1, 0] });
-const vectorZ = new _src_Objects_vector__WEBPACK_IMPORTED_MODULE_9__.Vector({ color: [0, 0, 1] });
 scene.setCamera(camera);
 scene.setLight(light);
-scene.addShapes(cube, /* cube2, cube3, cube4,  */ sphere);
-scene.vectors.push(vectorX, vectorY, vectorZ);
+scene.addShapes(cube, cube2, cube3, cube4, cube5, cube6, cube7, cube8, cube9, cube10, cube11, cube12, sphere);
 sphere.attach(camera);
-let gravity = -0.00001;
-let sphereVelocity = wgpu_matrix__WEBPACK_IMPORTED_MODULE_10__.vec3.create(0, 0, 0.005);
-let sphereAngularVelocity = wgpu_matrix__WEBPACK_IMPORTED_MODULE_10__.vec3.create(0, 0, 0);
-let restitutionCoef = 0.8;
-let frictionCoef = 0.5;
-let sphereMass = 50;
-let fixedDeltaTime = 1000 / 60;
+// let gravity = -10;
+let gravity = -parseFloat(document.getElementById("gravity").value) - 1;
+let restitutionCoef = 0.3;
+let frictionCoef = parseFloat(document.getElementById("friction").value) / 30;
+let angularVelocity = parseFloat(document.getElementById("angvel").value) * 100;
+let rollingDamping = parseFloat(document.getElementById("rolldamp").value) / 40 + 0.75;
+let jumpForce = parseFloat(document.getElementById("jumpforce").value);
+const REST_VELOCITY_THRESHOLD = 0.005;
+let fixedDeltaTime = 1 / 60; // seconds
 let lastTime = 0;
+let grounded = false;
 let render = (time) => {
-    let deltaTime = time - lastTime;
+    updateCoefficients();
+    updateSpans();
+    let deltaTime = (time - lastTime) / 1000; // seconds
     lastTime = time;
-    let grounded = false;
+    inputHandler.control(sphere, grounded, 1, angularVelocity, jumpForce, fixedDeltaTime, _src_inputHandler__WEBPACK_IMPORTED_MODULE_1__.ControllerDevice.keyboard);
+    grounded = false;
     scene.shapes.forEach((obj) => {
         if (obj instanceof _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube) {
             let collision = (0,_src_collision__WEBPACK_IMPORTED_MODULE_7__.checkCollision)(sphere, obj);
             if (collision !== undefined) {
-                grounded = true;
+                obj.color.set([0, 0.8, 0.2]);
                 // Normal of collision
-                let normal = sphere.getNormal(collision.res[0], collision.res[1], collision.res[2]);
-                normal = wgpu_matrix__WEBPACK_IMPORTED_MODULE_10__.vec3.negate(normal);
-                // console.log(normal);
-                // Calculate restitution 
-                let reposVector = wgpu_matrix__WEBPACK_IMPORTED_MODULE_10__.vec3.scale(normal, collision.ratio * sphere.getRadius());
+                let ballCollisionNormal = sphere.getNormal(collision.res[0], collision.res[1], collision.res[2]);
+                let cubeCollisionNormal = wgpu_matrix__WEBPACK_IMPORTED_MODULE_9__.vec3.negate(ballCollisionNormal);
+                if (cubeCollisionNormal[1] > 0) {
+                    grounded = true;
+                }
+                // Calculate velocity based on angular velocity
+                let contactOffset = wgpu_matrix__WEBPACK_IMPORTED_MODULE_9__.vec3.scale(ballCollisionNormal, -sphere.getRadius() * 100);
+                let rollingVelocity = wgpu_matrix__WEBPACK_IMPORTED_MODULE_9__.vec3.cross(contactOffset, sphere.angularVelocity);
+                sphere.velocity = wgpu_matrix__WEBPACK_IMPORTED_MODULE_9__.vec3.lerp(sphere.velocity, rollingVelocity, frictionCoef);
+                sphere.angularVelocity = wgpu_matrix__WEBPACK_IMPORTED_MODULE_9__.vec3.scale(sphere.angularVelocity, rollingDamping);
+                // Reposition the sphere to resolve penetration
+                let reposVector = wgpu_matrix__WEBPACK_IMPORTED_MODULE_9__.vec3.scale(cubeCollisionNormal, collision.ratio * sphere.getRadius());
                 sphere.globalMove(reposVector[0], reposVector[1], reposVector[2]);
-                const vnDot = wgpu_matrix__WEBPACK_IMPORTED_MODULE_10__.vec3.dot(sphereVelocity, normal);
-                let scaledNormal = wgpu_matrix__WEBPACK_IMPORTED_MODULE_10__.vec3.scale(normal, (1 + restitutionCoef) * vnDot);
-                sphereVelocity = wgpu_matrix__WEBPACK_IMPORTED_MODULE_10__.vec3.subtract(sphereVelocity, scaledNormal);
-                // Calculate friction
-                let movementVec = new Float32Array(sphereVelocity);
-                let sideCrossVec = wgpu_matrix__WEBPACK_IMPORTED_MODULE_10__.vec3.cross(normal, movementVec);
-                let directionVec = wgpu_matrix__WEBPACK_IMPORTED_MODULE_10__.vec3.cross(sideCrossVec, normal);
-                let upVec = new Float32Array([0, 1, 0]);
-                let normalForce = wgpu_matrix__WEBPACK_IMPORTED_MODULE_10__.vec3.dot(normal, upVec);
-                let frictionVec = wgpu_matrix__WEBPACK_IMPORTED_MODULE_10__.vec3.negate(wgpu_matrix__WEBPACK_IMPORTED_MODULE_10__.vec3.normalize(directionVec));
-                frictionVec = wgpu_matrix__WEBPACK_IMPORTED_MODULE_10__.vec3.scale(frictionVec, frictionCoef * sphereMass * gravity * normalForce);
-                sphereVelocity = wgpu_matrix__WEBPACK_IMPORTED_MODULE_10__.vec3.subtract(sphereVelocity, frictionVec);
-                let sss = wgpu_matrix__WEBPACK_IMPORTED_MODULE_10__.vec3.create(frictionVec[2], frictionVec[1], frictionVec[0]);
-                sss = wgpu_matrix__WEBPACK_IMPORTED_MODULE_10__.vec3.mulScalar(sss, 500);
-                sphereAngularVelocity[0] = sss[0];
-                sphereAngularVelocity[1] = sss[1];
-                sphereAngularVelocity[2] = sss[2];
+                // Calculate the velocity along the normal
+                const vnDot = wgpu_matrix__WEBPACK_IMPORTED_MODULE_9__.vec3.dot(sphere.velocity, cubeCollisionNormal);
+                // Decide how bouncy to be based on impact speed
+                let currentRestitution = restitutionCoef;
+                if (Math.abs(vnDot) < REST_VELOCITY_THRESHOLD) {
+                    currentRestitution = 0; // If speed is low, kill the bounce entirely
+                }
+                // Calculate and apply the restitution impulse
+                if (vnDot < 0) { // Only apply restitution if velocities are directed towards each other
+                    let scaledNormal = wgpu_matrix__WEBPACK_IMPORTED_MODULE_9__.vec3.scale(cubeCollisionNormal, (1 + currentRestitution) * vnDot);
+                    sphere.velocity = wgpu_matrix__WEBPACK_IMPORTED_MODULE_9__.vec3.subtract(sphere.velocity, scaledNormal);
+                }
             }
         }
     });
-    // Calculate air resistance
-    // let dragDirection = vec3.negate(vec3.normalize(sphereSpeed));
-    // let absSpeed = vec3.len(sphereSpeed);
-    // let dragForce = vec3.scale(dragDirection, 0.1 * absSpeed * absSpeed * sphere.getRadius() * sphere.getRadius() * Math.PI * 0.47);
-    // sphereSpeed = vec3.subtract(sphereSpeed, dragForce);
     // Calculate gravity
-    sphereVelocity[1] += gravity * fixedDeltaTime;
-    inputHandler.control(sphere, 0.001, 0.1, fixedDeltaTime, _src_inputHandler__WEBPACK_IMPORTED_MODULE_1__.ControllerDevice.keyboard);
-    if (inputHandler.control(sphere, 0.001, 0.1, fixedDeltaTime, _src_inputHandler__WEBPACK_IMPORTED_MODULE_1__.ControllerDevice.mouse)) {
-        renderer.render(scene);
-        requestAnimationFrame(render);
-        return;
-    }
-    sphere.globalMove(sphereVelocity[0] * fixedDeltaTime, sphereVelocity[1] * fixedDeltaTime, sphereVelocity[2] * fixedDeltaTime);
-    sphere.globalRotate(sphereAngularVelocity[0] * fixedDeltaTime, sphereAngularVelocity[1] * fixedDeltaTime, sphereAngularVelocity[2] * fixedDeltaTime);
-    // console.log(sphereAngularVelocity);
-    vectorX.setPosition(sphere.position);
-    vectorX.setVector(wgpu_matrix__WEBPACK_IMPORTED_MODULE_10__.mat4.getAxis(sphere.getRotationMatrix(), 0));
-    vectorY.setPosition(sphere.position);
-    vectorY.setVector(wgpu_matrix__WEBPACK_IMPORTED_MODULE_10__.mat4.getAxis(sphere.getRotationMatrix(), 1));
-    vectorZ.setPosition(sphere.position);
-    vectorZ.setVector(wgpu_matrix__WEBPACK_IMPORTED_MODULE_10__.mat4.getAxis(sphere.getRotationMatrix(), 2));
+    sphere.addForce(0, gravity * deltaTime, 0);
+    sphere.globalMove(sphere.velocity[0] * fixedDeltaTime, sphere.velocity[1] * fixedDeltaTime, sphere.velocity[2] * fixedDeltaTime);
+    sphere.globalRotate(-sphere.angularVelocity[0] * sphere.getRadius() * 100, 0, -sphere.angularVelocity[2] * sphere.getRadius() * 100);
     renderer.render(scene);
     requestAnimationFrame(render);
-    // console.log("FPS: %f", 1 / deltaTime * 1000);
 };
 requestAnimationFrame(render);
+function updateCoefficients() {
+    gravity = -parseFloat(document.getElementById("gravity").value) - 1;
+    frictionCoef = parseFloat(document.getElementById("friction").value) / 40;
+    angularVelocity = parseFloat(document.getElementById("angvel").value) * 100;
+    rollingDamping = parseFloat(document.getElementById("rolldamp").value) / 40 + 0.75;
+    jumpForce = parseFloat(document.getElementById("jumpforce").value) * 100;
+}
+function updateSpans() {
+    gravitySpan.textContent = gravity.toString();
+    frictionSpan.textContent = frictionCoef.toFixed(3);
+    angvelSpan.textContent = angularVelocity.toString();
+    rollSpan.textContent = rollingDamping.toFixed(3);
+    jumpforceSpan.textContent = jumpForce.toString();
+}
 
 __webpack_async_result__();
 } catch(e) { __webpack_async_result__(e); } }, 1);
@@ -230,7 +310,11 @@ class Camera extends _object__WEBPACK_IMPORTED_MODULE_0__.Object {
     getData() {
         let cameraWorldMatrix = wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__.mat4.multiply(this.positionMatrix, this.rotationMatrix);
         let cameraViewMatrix = wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__.mat4.inverse(cameraWorldMatrix);
-        return wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__.mat4.multiply(this.projectionMatrix, cameraViewMatrix);
+        // return mat4.multiply(this.projectionMatrix, cameraViewMatrix);
+        return {
+            projection: this.projectionMatrix,
+            camera: cameraViewMatrix
+        };
     }
 }
 
@@ -300,6 +384,8 @@ class Object {
     roll;
     parent;
     child;
+    velocity;
+    angularVelocity;
     constructor(objectDescriptor) {
         this.name = objectDescriptor.name;
         this.id = objectDescriptor.id;
@@ -323,6 +409,18 @@ class Object {
         }
         else {
             this.lockAxis = { x: false, y: false, z: false };
+        }
+        if (objectDescriptor.velocity !== undefined) {
+            this.velocity = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(objectDescriptor.velocity.x, objectDescriptor.velocity.y, objectDescriptor.velocity.z);
+        }
+        else {
+            this.velocity = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(0, 0, 0);
+        }
+        if (objectDescriptor.angularVelocity !== undefined) {
+            this.angularVelocity = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(objectDescriptor.angularVelocity.x, objectDescriptor.angularVelocity.y, objectDescriptor.angularVelocity.z);
+        }
+        else {
+            this.angularVelocity = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(0, 0, 0);
         }
         this.yaw = Math.atan2(this.back[0], this.back[2]);
         this.pitch = -Math.asin(this.back[1]);
@@ -394,22 +492,93 @@ class Object {
         }
         this.recalculateAngles();
     }
-    rotateAroundChild(childAxis, amount) {
+    rotateRelative(childAxis, amount) {
         if (this.child !== undefined) {
-            let rotation;
+            // let rotation: Float32Array = new Float32Array(3);
             if (childAxis == 'x') {
                 let right = new Float32Array(this.child.rotationMatrix.buffer, 4 * 0, 3);
-                rotation = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.axisRotation(right, amount * Math.PI / 180);
+                // rotation = mat4.axisRotation(right, amount * Math.PI / 180);
+                // this.angularVelocity = vec3.add(this.angularVelocity, vec3.scale(right, -amount * Math.PI / 180));
+                this.angularVelocity = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.lerp(this.angularVelocity, wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.scale(right, -amount * Math.PI / 180), 0.1);
             }
             else if (childAxis == 'y') {
                 let up = new Float32Array(this.child.rotationMatrix.buffer, 4 * 4, 3);
-                rotation = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.axisRotation(up, amount * Math.PI / 180);
+                // rotation = mat4.axisRotation(up, amount * Math.PI / 180);
+                // this.angularVelocity = vec3.add(this.angularVelocity, vec3.scale(up, -amount * Math.PI / 180));
+                this.angularVelocity = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.lerp(this.angularVelocity, wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.scale(up, -amount * Math.PI / 180), 0.1);
             }
             else {
                 let back = new Float32Array(this.child.rotationMatrix.buffer, 4 * 8, 3);
-                rotation = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.axisRotation(back, amount * Math.PI / 180);
+                // rotation = mat4.axisRotation(back, amount * Math.PI / 180);
+                // this.angularVelocity = vec3.add(this.angularVelocity, vec3.scale(back, -amount * Math.PI / 180));
+                this.angularVelocity = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.lerp(this.angularVelocity, wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.scale(back, -amount * Math.PI / 180), 0.1);
             }
-            this.rotationMatrix = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.multiply(rotation, this.rotationMatrix);
+            // this.rotationMatrix = mat4.multiply(rotation, this.rotationMatrix);
+        }
+    }
+    addForce(x, y, z) {
+        wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.add(this.velocity, [x, y, z], this.velocity);
+    }
+    addLocalForce(x, y, z) {
+        let relativeDirection = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.create(0, 0, 0);
+        relativeDirection = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.addScaled(relativeDirection, this.right, x);
+        relativeDirection = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.addScaled(relativeDirection, this.up, y);
+        relativeDirection = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.addScaled(relativeDirection, this.back, z);
+        wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.add(this.velocity, relativeDirection, this.velocity);
+    }
+    addRelativeAngularForce(childAxis, amount) {
+        if (this.child !== undefined) {
+            if (childAxis == 'x') {
+                let right = new Float32Array(this.child.rotationMatrix.buffer, 4 * 0, 3);
+                wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.add(this.angularVelocity, wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.mulScalar(right, amount), this.angularVelocity);
+            }
+            else if (childAxis == 'y') {
+                let up = new Float32Array(this.child.rotationMatrix.buffer, 4 * 4, 3);
+                wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.add(this.angularVelocity, wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.mulScalar(up, amount), this.angularVelocity);
+            }
+            else {
+                let back = new Float32Array(this.child.rotationMatrix.buffer, 4 * 8, 3);
+                wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.add(this.angularVelocity, wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.mulScalar(back, amount), this.angularVelocity);
+            }
+        }
+    }
+    addRelativeTorque(childAxis, amount, mass, radius, deltaTime) {
+        if (this.child !== undefined) {
+            const MAX_ANGULAR_ACCEL = 600;
+            let I = (2 / 5) * mass * radius * radius;
+            if (childAxis == 'x') {
+                let right = new Float32Array(this.child.rotationMatrix.buffer, 4 * 0, 3);
+                let torqueVec = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.scale(right, amount);
+                let angularAcc = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.scale(torqueVec, 1 / I);
+                if (wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.len(angularAcc) > MAX_ANGULAR_ACCEL) {
+                    angularAcc = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.scale(angularAcc, MAX_ANGULAR_ACCEL / wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.len(angularAcc));
+                }
+                let deltaOmega = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.scale(angularAcc, deltaTime);
+                this.angularVelocity = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.add(this.angularVelocity, deltaOmega);
+                // vec3.add(this.angularVelocity, vec3.mulScalar(right, amount), this.angularVelocity);
+            }
+            else if (childAxis == 'y') {
+                let up = new Float32Array(this.child.rotationMatrix.buffer, 4 * 4, 3);
+                let torqueVec = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.scale(up, amount);
+                let angularAcc = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.scale(torqueVec, 1 / I);
+                if (wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.len(angularAcc) > MAX_ANGULAR_ACCEL) {
+                    angularAcc = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.scale(angularAcc, MAX_ANGULAR_ACCEL / wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.len(angularAcc));
+                }
+                let deltaOmega = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.scale(angularAcc, deltaTime);
+                this.angularVelocity = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.add(this.angularVelocity, deltaOmega);
+                // vec3.add(this.angularVelocity, vec3.mulScalar(up, amount), this.angularVelocity);
+            }
+            else {
+                let back = new Float32Array(this.child.rotationMatrix.buffer, 4 * 8, 3);
+                let torqueVec = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.scale(back, amount);
+                let angularAcc = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.scale(torqueVec, 1 / I);
+                if (wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.len(angularAcc) > MAX_ANGULAR_ACCEL) {
+                    angularAcc = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.scale(angularAcc, MAX_ANGULAR_ACCEL / wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.len(angularAcc));
+                }
+                let deltaOmega = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.scale(angularAcc, deltaTime);
+                this.angularVelocity = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.add(this.angularVelocity, deltaOmega);
+                // vec3.add(this.angularVelocity, vec3.mulScalar(back, amount), this.angularVelocity);
+            }
         }
     }
     getPositionMatrix() {
@@ -742,64 +911,6 @@ class Sphere extends _shape__WEBPACK_IMPORTED_MODULE_0__.Shape {
 
 /***/ }),
 
-/***/ "./src/Objects/vector.ts":
-/*!*******************************!*\
-  !*** ./src/Objects/vector.ts ***!
-  \*******************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   Vector: () => (/* binding */ Vector)
-/* harmony export */ });
-/* harmony import */ var wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! wgpu-matrix */ "./node_modules/wgpu-matrix/dist/3.x/wgpu-matrix.module.js");
-
-class Vector {
-    position;
-    vector;
-    color;
-    constructor(vectorDescriptor) {
-        if (vectorDescriptor.position !== undefined) {
-            this.position = vectorDescriptor.position;
-        }
-        else {
-            this.position = new Float32Array([0, 0, 0]);
-        }
-        if (vectorDescriptor.vector !== undefined) {
-            this.vector = vectorDescriptor.vector;
-        }
-        else {
-            this.vector = new Float32Array([0, 1, 0]);
-        }
-        if (vectorDescriptor.color !== undefined) {
-            this.color = new Float32Array(vectorDescriptor.color);
-        }
-        else {
-            this.color = new Float32Array([1, 0, 0]);
-        }
-    }
-    setPosition(position) {
-        this.position = position;
-    }
-    setVector(vector) {
-        this.vector = vector;
-    }
-    getData() {
-        const startPosition = this.position;
-        const endPosition = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.addScaled(this.position, this.vector, 2);
-        let result = new Float32Array(startPosition.length + endPosition.length);
-        result.set(startPosition);
-        result.set(endPosition, 3);
-        return {
-            data: result,
-            color: this.color,
-        };
-    }
-}
-
-
-/***/ }),
-
 /***/ "./src/collision.ts":
 /*!**************************!*\
   !*** ./src/collision.ts ***!
@@ -931,7 +1042,7 @@ class InputHandler {
         this.mouseScrollDelta = 0;
         return output;
     };
-    control(object, moveSpeed, rotateSpeed, deltaTime, device) {
+    control(object, grounded, moveSpeed, rotateSpeed, jumpForce, deltaTime, device) {
         let used = false;
         if (device == ControllerDevice.keyboard) {
             let keyPressed = this.getKeysPressed();
@@ -941,22 +1052,29 @@ class InputHandler {
                 used = true;
                 switch (key) {
                     case 'a':
-                        object.globalRotate(0, rotateSpeed * deltaTime, 0);
+                        object.globalRotate(0, 100 * deltaTime, 0);
                         break;
                     case 'd':
-                        object.globalRotate(0, -rotateSpeed * deltaTime, 0);
+                        object.globalRotate(0, -100 * deltaTime, 0);
                         break;
                     case 'w':
-                        object.rotateAroundChild('x', -rotateSpeed * deltaTime);
+                        object.rotateRelative('x', -rotateSpeed * deltaTime);
                         break;
                     case 's':
-                        object.rotateAroundChild('x', rotateSpeed * deltaTime);
+                        object.rotateRelative('x', rotateSpeed * deltaTime);
                         break;
                     case 'q':
-                        object.rotateAroundChild('z', rotateSpeed * deltaTime);
+                        object.rotateRelative('z', rotateSpeed * deltaTime);
                         break;
                     case 'e':
-                        object.rotateAroundChild('z', -rotateSpeed * deltaTime);
+                        object.rotateRelative('z', -rotateSpeed * deltaTime);
+                        break;
+                    case ' ':
+                        if (grounded)
+                            object.addForce(0, jumpForce * deltaTime, 0);
+                        break;
+                    case 'r':
+                        location.reload();
                         break;
                 }
             });
@@ -980,6 +1098,40 @@ class InputHandler {
         }
         return used;
     }
+    forceControl(moveAccel, rotateAccel, objVelocity, objAngularVelocity, deltaTime) {
+        let used = false;
+        let keyPressed = this.getKeysPressed();
+        keyPressed.forEach((val, key) => {
+            if (!val)
+                return;
+            used = true;
+            switch (key) {
+                case 'a':
+                    // object.globalRotate(0, rotateSpeed * deltaTime, 0);
+                    break;
+                case 'd':
+                    // object.globalRotate(0, -rotateSpeed * deltaTime, 0);
+                    break;
+                case 'w':
+                    // object.rotateAroundChild('x', -rotateSpeed * deltaTime);
+                    objAngularVelocity[0] += rotateAccel * deltaTime;
+                    break;
+                case 's':
+                    // object.rotateAroundChild('x', rotateSpeed * deltaTime);
+                    objAngularVelocity[0] -= rotateAccel * deltaTime;
+                    break;
+                case 'q':
+                    // object.rotateAroundChild('z', rotateSpeed * deltaTime);
+                    objAngularVelocity[2] += rotateAccel * deltaTime;
+                    break;
+                case 'e':
+                    // object.rotateAroundChild('z', -rotateSpeed * deltaTime);
+                    objAngularVelocity[2] -= rotateAccel * deltaTime;
+                    break;
+            }
+        });
+        return used;
+    }
 }
 
 
@@ -998,6 +1150,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _shaders_objColorShader_wgsl__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./shaders/objColorShader.wgsl */ "./src/shaders/objColorShader.wgsl");
 /* harmony import */ var _shaders_objTextureShader_wgsl__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./shaders/objTextureShader.wgsl */ "./src/shaders/objTextureShader.wgsl");
 /* harmony import */ var _shaders_debugShader_wgsl__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./shaders/debugShader.wgsl */ "./src/shaders/debugShader.wgsl");
+/* harmony import */ var _shaders_skyboxShader_wgsl__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./shaders/skyboxShader.wgsl */ "./src/shaders/skyboxShader.wgsl");
+/* harmony import */ var wgpu_matrix__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! wgpu-matrix */ "./node_modules/wgpu-matrix/dist/3.x/wgpu-matrix.module.js");
+
+
 
 
 
@@ -1009,6 +1165,7 @@ class Renderer {
     colorRenderPipeline;
     textureRenderPipeline;
     debugRenderPipeline;
+    skyBoxRenderPipeline;
     renderPassDescriptor;
     multisamlpeTexture;
     renderTarget;
@@ -1024,12 +1181,15 @@ class Renderer {
     shapesColorBindGroup;
     shapesTextureBindGroup;
     debugBindGroup;
+    skyboxBindGroup;
+    skyboxCameraBuffer;
     constructor(canvas) {
         this.canvas = canvas;
     }
-    async initialize(textureAtlas) {
+    async initialize(textureAtlas, skyboxPath) {
         if (navigator.gpu === undefined) {
             console.log("This browser/device doesn't support WebGPU...");
+            alert("This browser/device doesn't support WebGPU...");
             return;
         }
         // Get device
@@ -1243,6 +1403,39 @@ class Renderer {
             multisample: { count: 4 }
         };
         this.debugRenderPipeline = this.device.createRenderPipeline(debugRenderPipelineDescriptor);
+        const skyBoxShaderModule = this.device.createShaderModule({ code: _shaders_skyboxShader_wgsl__WEBPACK_IMPORTED_MODULE_3__["default"] });
+        const skyboxRenderPipelineDescriptor = {
+            label: 'skybox render pipeline',
+            layout: 'auto',
+            vertex: {
+                module: skyBoxShaderModule,
+            },
+            fragment: {
+                module: skyBoxShaderModule,
+                targets: [{ format: this.presentationFormat }],
+            },
+            depthStencil: {
+                depthWriteEnabled: true,
+                depthCompare: 'less-equal',
+                format: 'depth24plus',
+            },
+            multisample: {
+                count: 4,
+            }
+        };
+        this.skyBoxRenderPipeline = this.device.createRenderPipeline(skyboxRenderPipelineDescriptor);
+        const skyboxTexture = this.createTextureFromImages(this.device, [
+            skyboxPath + 'px.jpg',
+            skyboxPath + 'nx.jpg',
+            skyboxPath + 'py.jpg',
+            skyboxPath + 'ny.jpg',
+            skyboxPath + 'pz.jpg',
+            skyboxPath + 'nz.jpg',
+        ]);
+        const skyboxSampler = this.device.createSampler({
+            magFilter: 'linear',
+            minFilter: 'linear',
+        });
         // ========== Objects Bind Group ==========
         this.cameraBuffer = this.device.createBuffer({
             size: 4 * 4 * 4, // 4 x 4 float32 matrix
@@ -1351,6 +1544,19 @@ class Renderer {
                 { binding: 1, resource: { buffer: this.debugColorBuffer, size: 4 * 4 } }
             ]
         });
+        this.skyboxCameraBuffer = this.device.createBuffer({
+            size: 4 * 4 * 4, // 4 x 4 float32 matrix
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        });
+        this.skyboxBindGroup = this.device.createBindGroup({
+            label: 'skybox bind group',
+            layout: this.skyBoxRenderPipeline.getBindGroupLayout(0),
+            entries: [
+                { binding: 0, resource: { buffer: this.skyboxCameraBuffer } },
+                { binding: 1, resource: skyboxSampler },
+                { binding: 2, resource: (await skyboxTexture).createView({ dimension: 'cube' }) },
+            ],
+        });
         // Prepare depth texture
         const depthTexture = this.device.createTexture({
             size: [this.context.getCurrentTexture().width, this.context.getCurrentTexture().height],
@@ -1375,6 +1581,32 @@ class Renderer {
             }
         };
     }
+    copySourcesToTexture(device, texture, sources) {
+        sources.forEach((source, layer) => {
+            device.queue.copyExternalImageToTexture({ source }, { texture, origin: [0, 0, layer] }, { width: source.width, height: source.height });
+        });
+    }
+    createTextureFromSources(device, sources) {
+        const source = sources[0];
+        const texture = device.createTexture({
+            format: 'rgba8unorm',
+            size: [source.width, source.height, sources.length],
+            usage: GPUTextureUsage.TEXTURE_BINDING |
+                GPUTextureUsage.COPY_DST |
+                GPUTextureUsage.RENDER_ATTACHMENT,
+        });
+        this.copySourcesToTexture(device, texture, sources);
+        return texture;
+    }
+    async loadImageBitmap(url) {
+        const res = await fetch(url);
+        const blob = await res.blob();
+        return await createImageBitmap(blob);
+    }
+    async createTextureFromImages(device, urls) {
+        const images = await Promise.all(urls.map(this.loadImageBitmap));
+        return this.createTextureFromSources(device, images);
+    }
     render(scene) {
         const canvasTexture = this.context.getCurrentTexture();
         if (!this.multisamlpeTexture ||
@@ -1394,7 +1626,9 @@ class Renderer {
         this.renderPassDescriptor.colorAttachments[0].view = this.multisamlpeTexture.createView();
         this.renderPassDescriptor.colorAttachments[0].resolveTarget = canvasTexture.createView();
         const renderPass = encoder.beginRenderPass(this.renderPassDescriptor);
-        this.device.queue.writeBuffer(this.cameraBuffer, 0, scene.camera.getData());
+        let cameraData = scene.camera.getData();
+        let projCamMatrix = wgpu_matrix__WEBPACK_IMPORTED_MODULE_4__.mat4.multiply(cameraData.projection, cameraData.camera);
+        this.device.queue.writeBuffer(this.cameraBuffer, 0, projCamMatrix);
         this.device.queue.writeBuffer(this.lightBuffer, 0, scene.light.getData());
         scene.vectors.forEach((vec, idx) => {
             renderPass.setBindGroup(0, this.debugBindGroup, [idx * 256]);
@@ -1436,6 +1670,13 @@ class Renderer {
             renderPass.draw(renderData.numberVertices);
             offset += 1;
         });
+        let sCameraData = new Float32Array(cameraData.camera);
+        sCameraData.set([0, 0, 0], 12);
+        let proj = wgpu_matrix__WEBPACK_IMPORTED_MODULE_4__.mat4.multiply(cameraData.projection, sCameraData);
+        this.device.queue.writeBuffer(this.skyboxCameraBuffer, 0, proj);
+        renderPass.setPipeline(this.skyBoxRenderPipeline);
+        renderPass.setBindGroup(0, this.skyboxBindGroup);
+        renderPass.draw(3);
         renderPass.end();
         const commandBuffer = encoder.finish();
         this.device.queue.submit([commandBuffer]);
@@ -1527,7 +1768,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("struct Camera {\n    matrix: mat4x4f,\n};\n\nstruct VertexOutput {\n    @builtin(position) position: vec4f,\n};\n\n@group(0) @binding(0) var<uniform> camera: Camera;\n@group(0) @binding(1) var<uniform> color: vec3f;\n\n@vertex\nfn vert(\n    @location(0) position: vec4f,\n) -> VertexOutput {\n    var vsOut: VertexOutput;\n    vsOut.position = camera.matrix * position;\n    return vsOut;\n}\n\n@fragment\nfn frag() -> @location(0) vec4f {\n    return vec4f(color.rgb, 1);\n}\n");
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("struct Camera {\r\n    matrix: mat4x4f,\r\n};\r\n\r\nstruct VertexOutput {\r\n    @builtin(position) position: vec4f,\r\n};\r\n\r\n@group(0) @binding(0) var<uniform> camera: Camera;\r\n@group(0) @binding(1) var<uniform> color: vec3f;\r\n\r\n@vertex\r\nfn vert(\r\n    @location(0) position: vec4f,\r\n) -> VertexOutput {\r\n    var vsOut: VertexOutput;\r\n    vsOut.position = camera.matrix * position;\r\n    return vsOut;\r\n}\r\n\r\n@fragment\r\nfn frag() -> @location(0) vec4f {\r\n    return vec4f(color.rgb, 1);\r\n}\r\n");
 
 /***/ }),
 
@@ -1541,7 +1782,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("struct Camera {\n    matrix: mat4x4f,\n};\n\nstruct Light {\n    direction: vec3f,\n}\n\nstruct VertexOutput {\n    @builtin(position) position: vec4f,\n    @location(0) normal: vec3f,\n    @location(1) texcoord: vec2f,\n};\n\n// Bind group for world\n@group(0) @binding(0) var<uniform> camera: Camera;\n@group(0) @binding(1) var<uniform> light: Light;\n\n// Bind group for objects\n@group(1) @binding(0) var<uniform> objTran: mat4x4f;\n@group(1) @binding(1) var<uniform> color: vec4f;\n\n@vertex\nfn vert(\n    @location(0) position: vec4f,\n    @location(1) normal: vec3f,\n    @location(2) texcoord: vec2f,\n    @builtin(vertex_index) vertIndex: u32\n) -> VertexOutput {\n    var vsOut: VertexOutput;\n    vsOut.position = camera.matrix * objTran * position;\n    vsOut.normal = (objTran * vec4f(normal, 0)).xyz;\n    vsOut.texcoord = texcoord;\n    return vsOut;\n}\n\n@fragment\nfn frag(vsOut: VertexOutput) -> @location(0) vec4f {\n    let normal = normalize(vsOut.normal);\n    let lgh = max(dot(normal, -light.direction), 0.25);\n    let col = color.rgb * lgh; // Multiply only color (not alpha)\n    // let col = color.rgb; // Multiply only color (not alpha)\n    return vec4f(col, color.a);\n}\n");
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("struct Camera {\r\n    matrix: mat4x4f,\r\n};\r\n\r\nstruct Light {\r\n    direction: vec3f,\r\n}\r\n\r\nstruct VertexOutput {\r\n    @builtin(position) position: vec4f,\r\n    @location(0) normal: vec3f,\r\n    @location(1) texcoord: vec2f,\r\n};\r\n\r\n// Bind group for world\r\n@group(0) @binding(0) var<uniform> camera: Camera;\r\n@group(0) @binding(1) var<uniform> light: Light;\r\n\r\n// Bind group for objects\r\n@group(1) @binding(0) var<uniform> objTran: mat4x4f;\r\n@group(1) @binding(1) var<uniform> color: vec4f;\r\n\r\n@vertex\r\nfn vert(\r\n    @location(0) position: vec4f,\r\n    @location(1) normal: vec3f,\r\n    @location(2) texcoord: vec2f,\r\n    @builtin(vertex_index) vertIndex: u32\r\n) -> VertexOutput {\r\n    var vsOut: VertexOutput;\r\n    vsOut.position = camera.matrix * objTran * position;\r\n    vsOut.normal = (objTran * vec4f(normal, 0)).xyz;\r\n    vsOut.texcoord = texcoord;\r\n    return vsOut;\r\n}\r\n\r\n@fragment\r\nfn frag(vsOut: VertexOutput) -> @location(0) vec4f {\r\n    let normal = normalize(vsOut.normal);\r\n    let lgh = max(dot(normal, -light.direction), 0.25);\r\n    let col = color.rgb * lgh; // Multiply only color (not alpha)\r\n    // let col = color.rgb; // Multiply only color (not alpha)\r\n    return vec4f(col, color.a);\r\n}\r\n");
 
 /***/ }),
 
@@ -1555,7 +1796,21 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("struct Camera {\n    matrix: mat4x4f,\n};\n\nstruct Light {\n    direction: vec3f,\n}\n\nstruct VertexOutput {\n    @builtin(position) position: vec4f,\n    @location(0) normal: vec3f,\n    @location(1) texcoord: vec2f,\n};\n\n@group(0) @binding(0) var<uniform> camera: Camera;\n@group(0) @binding(1) var<uniform> light: Light;\n\n@group(1) @binding(0) var<uniform> objectTransform: mat4x4f;\n@group(1) @binding(1) var linSampler: sampler;\n@group(1) @binding(2) var tex: texture_2d<f32>;\n// @group(1) @binding(3) var<uniform> textureElements: vec2f;\n\n@vertex\nfn vert(\n    @location(0) position: vec4f,\n    @location(1) normal: vec3f,\n    @location(2) texcoord: vec2f,\n) -> VertexOutput {\n    var vsOut: VertexOutput;\n    vsOut.position = camera.matrix * objectTransform * position;\n    vsOut.normal = (objectTransform * vec4f(normal, 0)).xyz;\n    vsOut.texcoord = texcoord;\n    return vsOut;\n}\n\n\n@fragment\nfn frag(vsOut: VertexOutput) -> @location(0) vec4f {\n    let normal = normalize(vsOut.normal);\n    let texcolor = textureSample(tex, linSampler, vsOut.texcoord);\n    let lgh = max(dot(normal, -light.direction), 0.25);\n    let finalcolor = texcolor.rgb * lgh;\n    return vec4f(finalcolor, texcolor.a);\n}");
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("struct Camera {\r\n    matrix: mat4x4f,\r\n};\r\n\r\nstruct Light {\r\n    direction: vec3f,\r\n}\r\n\r\nstruct VertexOutput {\r\n    @builtin(position) position: vec4f,\r\n    @location(0) normal: vec3f,\r\n    @location(1) texcoord: vec2f,\r\n};\r\n\r\n@group(0) @binding(0) var<uniform> camera: Camera;\r\n@group(0) @binding(1) var<uniform> light: Light;\r\n\r\n@group(1) @binding(0) var<uniform> objectTransform: mat4x4f;\r\n@group(1) @binding(1) var linSampler: sampler;\r\n@group(1) @binding(2) var tex: texture_2d<f32>;\r\n// @group(1) @binding(3) var<uniform> textureElements: vec2f;\r\n\r\n@vertex\r\nfn vert(\r\n    @location(0) position: vec4f,\r\n    @location(1) normal: vec3f,\r\n    @location(2) texcoord: vec2f,\r\n) -> VertexOutput {\r\n    var vsOut: VertexOutput;\r\n    vsOut.position = camera.matrix * objectTransform * position;\r\n    vsOut.normal = (objectTransform * vec4f(normal, 0)).xyz;\r\n    vsOut.texcoord = texcoord;\r\n    return vsOut;\r\n}\r\n\r\n\r\n@fragment\r\nfn frag(vsOut: VertexOutput) -> @location(0) vec4f {\r\n    let normal = normalize(vsOut.normal);\r\n    let texcolor = textureSample(tex, linSampler, vsOut.texcoord);\r\n    let lgh = max(dot(normal, -light.direction), 0.25);\r\n    let finalcolor = texcolor.rgb * lgh;\r\n    return vec4f(finalcolor, texcolor.a);\r\n}");
+
+/***/ }),
+
+/***/ "./src/shaders/skyboxShader.wgsl":
+/*!***************************************!*\
+  !*** ./src/shaders/skyboxShader.wgsl ***!
+  \***************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("// struct Uniforms {\r\n//   viewDirectionProjectionInverse: mat4x4f,\r\n// };\r\n \r\n// struct VSOutput {\r\n//   @builtin(position) position: vec4f,\r\n//   @location(0) pos: vec4f,\r\n// };\r\n \r\n// @group(0) @binding(0) var<uniform> uni: Uniforms;\r\n// @group(0) @binding(1) var ourSampler: sampler;\r\n// @group(0) @binding(2) var ourTexture: texture_cube<f32>;\r\n \r\n// @vertex fn vs(@builtin(vertex_index) vNdx: u32) -> VSOutput {\r\n//   let pos = array(\r\n//     vec2f(-1, 3),\r\n//     vec2f(-1,-1),\r\n//     vec2f( 3,-1),\r\n//   );\r\n//   var vsOut: VSOutput;\r\n//   vsOut.position = vec4f(pos[vNdx], 1, 1);\r\n//   vsOut.pos = vsOut.position;\r\n//   return vsOut;\r\n// }\r\n\r\n// @fragment fn fs(vsOut: VSOutput) -> @location(0) vec4f {\r\n//   let t = uni.viewDirectionProjectionInverse * vsOut.pos;\r\n//   return textureSample(ourTexture, ourSampler, normalize(t.xyz / t.w) * vec3f(1, 1, -1));\r\n// }\r\nstruct Uniforms {\r\n  viewDirectionProjectionInverse: mat4x4f,\r\n};\r\nstruct VSOutput {\r\n  @builtin(position) position: vec4f,\r\n  @location(0) ndc: vec2f, // Normalized Device Coordinates (range -1 to 1)\r\n};\r\n@group(0) @binding(0) var<uniform> uni: Uniforms;\r\n@group(0) @binding(1) var ourSampler: sampler;\r\n@group(0) @binding(2) var ourTexture: texture_cube<f32>;\r\n\r\n@vertex fn vs(@builtin(vertex_index) vNdx: u32) -> VSOutput {\r\n  let pos = array(\r\n    vec2f(-1.0,  3.0),\r\n    vec2f(-1.0, -1.0),\r\n    vec2f( 3.0, -1.0),\r\n  );\r\n\r\n  let ndc = array(\r\n    vec2f(-1.0,  3.0),\r\n    vec2f(-1.0, -1.0),\r\n    vec2f( 3.0, -1.0),\r\n  );\r\n\r\n  var out: VSOutput;\r\n  out.position = vec4f(pos[vNdx], 1.0, 1.0);\r\n  out.ndc = ndc[vNdx];\r\n  return out;\r\n}\r\n@fragment fn fs(vsOut: VSOutput) -> @location(0) vec4f {\r\n  let clip = vec4f(vsOut.ndc.xy, 1.0, 1.0);\r\n  let worldDir = (uni.viewDirectionProjectionInverse * clip).xyz;\r\n  return textureSample(ourTexture, ourSampler, worldDir);\r\n}\r\n");
 
 /***/ }),
 

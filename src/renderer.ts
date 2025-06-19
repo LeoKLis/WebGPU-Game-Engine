@@ -10,7 +10,10 @@ import { RenderDataDescriptor } from "./Objects/shapes/shape";
 import objColorShader from "./shaders/objColorShader.wgsl";
 import objTextureShader from "./shaders/objTextureShader.wgsl";
 import debugShader from "./shaders/debugShader.wgsl";
+import skyBoxShader from "./shaders/skyboxShader.wgsl"
 import { TextureAtlas } from "./textureAtlas";
+import { unwatchFile } from "fs";
+import { mat4 } from "wgpu-matrix";
 
 export class Renderer {
     private canvas: HTMLCanvasElement;
@@ -20,6 +23,7 @@ export class Renderer {
     private colorRenderPipeline!: GPURenderPipeline;
     private textureRenderPipeline!: GPURenderPipeline;
     private debugRenderPipeline!: GPURenderPipeline;
+    private skyBoxRenderPipeline!: GPURenderPipeline;
     private renderPassDescriptor!: GPURenderPassDescriptor;
 
     private multisamlpeTexture!: GPUTexture;
@@ -39,14 +43,17 @@ export class Renderer {
     private shapesColorBindGroup!: GPUBindGroup;
     private shapesTextureBindGroup!: GPUBindGroup;
     private debugBindGroup!: GPUBindGroup;
+    private skyboxBindGroup!: GPUBindGroup;
+    private skyboxCameraBuffer!: GPUBuffer;
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
     }
 
-    public async initialize(textureAtlas: TextureAtlas) {
+    public async initialize(textureAtlas: TextureAtlas, skyboxPath: string) {
         if (navigator.gpu === undefined) {
             console.log("This browser/device doesn't support WebGPU...");
+            alert("This browser/device doesn't support WebGPU...");
             return;
         }
 
@@ -271,6 +278,44 @@ export class Renderer {
         }
         this.debugRenderPipeline = this.device.createRenderPipeline(debugRenderPipelineDescriptor);
 
+        const skyBoxShaderModule = this.device.createShaderModule({ code: skyBoxShader });
+        const skyboxRenderPipelineDescriptor: GPURenderPipelineDescriptor = {
+            label: 'skybox render pipeline',
+            layout: 'auto',
+            vertex: {
+                module: skyBoxShaderModule,
+            },
+            fragment: {
+                module: skyBoxShaderModule,
+                targets: [{ format: this.presentationFormat }],
+            },
+            depthStencil: {
+                depthWriteEnabled: true,
+                depthCompare: 'less-equal',
+                format: 'depth24plus',
+            },
+            multisample: {
+                count: 4,
+            }
+        };
+        this.skyBoxRenderPipeline = this.device.createRenderPipeline(skyboxRenderPipelineDescriptor);
+        const skyboxTexture = this.createTextureFromImages(
+            this.device,
+            [
+                skyboxPath + 'px.jpg',
+                skyboxPath + 'nx.jpg',
+                skyboxPath + 'py.jpg',
+                skyboxPath + 'ny.jpg',
+                skyboxPath + 'pz.jpg',
+                skyboxPath + 'nz.jpg',
+            ]
+        );
+        const skyboxSampler = this.device.createSampler({
+            magFilter: 'linear',
+            minFilter: 'linear',
+        });
+
+
         // ========== Objects Bind Group ==========
         this.cameraBuffer = this.device.createBuffer({
             size: 4 * 4 * 4, // 4 x 4 float32 matrix
@@ -386,6 +431,21 @@ export class Renderer {
             ]
         })
 
+        this.skyboxCameraBuffer= this.device.createBuffer({
+            size: 4 * 4 * 4, // 4 x 4 float32 matrix
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        });
+
+        this.skyboxBindGroup = this.device.createBindGroup({
+            label: 'skybox bind group',
+            layout: this.skyBoxRenderPipeline.getBindGroupLayout(0),
+            entries: [
+                { binding: 0, resource: { buffer: this.skyboxCameraBuffer }},
+                { binding: 1, resource: skyboxSampler },
+                { binding: 2, resource: (await skyboxTexture).createView({dimension: 'cube'})},
+            ],
+        })
+
         // Prepare depth texture
         const depthTexture = this.device.createTexture({
             size: [this.context.getCurrentTexture().width, this.context.getCurrentTexture().height],
@@ -412,6 +472,40 @@ export class Renderer {
         }
     }
 
+    private copySourcesToTexture(device: GPUDevice, texture: GPUTexture, sources: ImageBitmap[]) {
+        sources.forEach((source, layer) => {
+            device.queue.copyExternalImageToTexture(
+                { source },
+                {texture, origin: [0, 0, layer] },
+                { width: source.width, height: source.height },
+            );
+        });
+    }
+
+    private createTextureFromSources(device: GPUDevice, sources: ImageBitmap[]) {
+        const source = sources[0];
+        const texture = device.createTexture({
+            format: 'rgba8unorm',
+            size: [source.width, source.height, sources.length],
+            usage: GPUTextureUsage.TEXTURE_BINDING |
+                GPUTextureUsage.COPY_DST |
+                GPUTextureUsage.RENDER_ATTACHMENT,
+        });
+        this.copySourcesToTexture(device, texture, sources);
+        return texture;
+    }
+
+    private async loadImageBitmap(url: string) {
+        const res = await fetch(url);
+        const blob = await res.blob();
+        return await createImageBitmap(blob);
+    }
+
+    private async createTextureFromImages(device: GPUDevice, urls: string[]) {
+        const images = await Promise.all(urls.map(this.loadImageBitmap));
+        return this.createTextureFromSources(device, images);
+    }
+
     public render(scene: Scene) {
         const canvasTexture = this.context.getCurrentTexture();
         if (!this.multisamlpeTexture ||
@@ -434,7 +528,9 @@ export class Renderer {
 
         const renderPass = encoder.beginRenderPass(this.renderPassDescriptor);
 
-        this.device.queue.writeBuffer(this.cameraBuffer, 0, scene.camera.getData());
+        let cameraData = scene.camera.getData();
+        let projCamMatrix = mat4.multiply(cameraData.projection, cameraData.camera);
+        this.device.queue.writeBuffer(this.cameraBuffer, 0, projCamMatrix);
         this.device.queue.writeBuffer(this.lightBuffer, 0, scene.light.getData());
 
         scene.vectors.forEach((vec, idx) => {
@@ -482,6 +578,14 @@ export class Renderer {
 
             offset += 1;
         });
+
+        let sCameraData = new Float32Array(cameraData.camera);
+        sCameraData.set([0, 0, 0], 12);
+        let proj = mat4.multiply(cameraData.projection, sCameraData);
+        this.device.queue.writeBuffer(this.skyboxCameraBuffer, 0, proj);
+        renderPass.setPipeline(this.skyBoxRenderPipeline);
+        renderPass.setBindGroup(0, this.skyboxBindGroup);
+        renderPass.draw(3);
 
         renderPass.end();
 

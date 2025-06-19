@@ -8,12 +8,21 @@ export interface LockAxisDescriptor {
     z: boolean;
 }
 
+export interface VelocityDescriptor {
+    x: number;
+    y: number;
+    z: number;
+}
+
 export interface ObjectDescriptor {
     name: string;
     id: string;
     position: [number, number, number];
     rotation: [number, number, number];
     lockAxis?: LockAxisDescriptor;
+    velocity?: VelocityDescriptor;
+    angularVelocity?: VelocityDescriptor;
+    mass?: number;
 }
 
 export class Object implements IObject {
@@ -38,6 +47,9 @@ export class Object implements IObject {
 
     public parent?: Object;
     public child?: Object;
+
+    public velocity: Vec3;
+    public angularVelocity: Vec3;
 
     constructor(objectDescriptor: ObjectDescriptor) {
         this.name = objectDescriptor.name;
@@ -65,6 +77,18 @@ export class Object implements IObject {
             this.lockAxis = objectDescriptor.lockAxis;
         } else {
             this.lockAxis = { x: false, y: false, z: false }
+        }
+
+        if (objectDescriptor.velocity !== undefined) {
+            this.velocity = vec3.create(objectDescriptor.velocity.x, objectDescriptor.velocity.y, objectDescriptor.velocity.z)
+        } else {
+            this.velocity = vec3.create(0, 0, 0);
+        }
+
+        if (objectDescriptor.angularVelocity !== undefined) {
+            this.angularVelocity = vec3.create(objectDescriptor.angularVelocity.x, objectDescriptor.angularVelocity.y, objectDescriptor.angularVelocity.z)
+        } else {
+            this.angularVelocity = vec3.create(0, 0, 0);
         }
 
         this.yaw = Math.atan2(this.back[0], this.back[2]);
@@ -146,20 +170,92 @@ export class Object implements IObject {
         this.recalculateAngles();
     }
 
-    public rotateAroundChild(childAxis: 'x'|'y'|'z', amount: number): void {
+    public rotateRelative(childAxis: 'x' | 'y' | 'z', amount: number): void {
         if (this.child !== undefined) {
-            let rotation: Float32Array;
+            // let rotation: Float32Array = new Float32Array(3);
             if (childAxis == 'x') {
                 let right = new Float32Array(this.child.rotationMatrix.buffer, 4 * 0, 3);
-                rotation = mat4.axisRotation(right, amount * Math.PI / 180);
+                // rotation = mat4.axisRotation(right, amount * Math.PI / 180);
+                // this.angularVelocity = vec3.add(this.angularVelocity, vec3.scale(right, -amount * Math.PI / 180));
+                this.angularVelocity = vec3.lerp(this.angularVelocity, vec3.scale(right, -amount * Math.PI / 180), 0.1);
             } else if (childAxis == 'y') {
                 let up = new Float32Array(this.child.rotationMatrix.buffer, 4 * 4, 3);
-                rotation = mat4.axisRotation(up, amount * Math.PI / 180);
+                // rotation = mat4.axisRotation(up, amount * Math.PI / 180);
+                // this.angularVelocity = vec3.add(this.angularVelocity, vec3.scale(up, -amount * Math.PI / 180));
+                this.angularVelocity = vec3.lerp(this.angularVelocity, vec3.scale(up, -amount * Math.PI / 180), 0.1);
             } else {
                 let back = new Float32Array(this.child.rotationMatrix.buffer, 4 * 8, 3);
-                rotation = mat4.axisRotation(back, amount * Math.PI / 180);
+                // rotation = mat4.axisRotation(back, amount * Math.PI / 180);
+                // this.angularVelocity = vec3.add(this.angularVelocity, vec3.scale(back, -amount * Math.PI / 180));
+                this.angularVelocity = vec3.lerp(this.angularVelocity, vec3.scale(back, -amount * Math.PI / 180), 0.1);
             }
-            this.rotationMatrix = mat4.multiply(rotation, this.rotationMatrix);
+            // this.rotationMatrix = mat4.multiply(rotation, this.rotationMatrix);
+        }
+
+    }
+
+    public addForce(x: number, y: number, z: number): void {
+        vec3.add(this.velocity, [x, y, z], this.velocity);
+    }
+
+    public addLocalForce(x: number, y: number, z: number): void {
+        let relativeDirection = vec3.create(0, 0, 0);
+        relativeDirection = vec3.addScaled(relativeDirection, this.right, x);
+        relativeDirection = vec3.addScaled(relativeDirection, this.up, y);
+        relativeDirection = vec3.addScaled(relativeDirection, this.back, z);
+        vec3.add(this.velocity, relativeDirection, this.velocity);
+    }
+
+    public addRelativeAngularForce(childAxis: 'x' | 'y' | 'z', amount: number) {
+        if (this.child !== undefined) {
+            if (childAxis == 'x') {
+                let right = new Float32Array(this.child.rotationMatrix.buffer, 4 * 0, 3);
+                vec3.add(this.angularVelocity, vec3.mulScalar(right, amount), this.angularVelocity);
+            } else if (childAxis == 'y') {
+                let up = new Float32Array(this.child.rotationMatrix.buffer, 4 * 4, 3);
+                vec3.add(this.angularVelocity, vec3.mulScalar(up, amount), this.angularVelocity);
+            } else {
+                let back = new Float32Array(this.child.rotationMatrix.buffer, 4 * 8, 3);
+                vec3.add(this.angularVelocity, vec3.mulScalar(back, amount), this.angularVelocity);
+            }
+        }
+    }
+
+    public addRelativeTorque(childAxis: 'x' | 'y' | 'z', amount: number, mass: number, radius: number, deltaTime: number) {
+        if (this.child !== undefined) {
+            const MAX_ANGULAR_ACCEL = 600;
+            let I = (2 / 5) * mass * radius * radius;
+            if (childAxis == 'x') {
+                let right = new Float32Array(this.child.rotationMatrix.buffer, 4 * 0, 3);
+                let torqueVec = vec3.scale(right, amount);
+                let angularAcc = vec3.scale(torqueVec, 1 / I);
+                if (vec3.len(angularAcc) > MAX_ANGULAR_ACCEL) {
+                    angularAcc = vec3.scale(angularAcc, MAX_ANGULAR_ACCEL / vec3.len(angularAcc));
+                }
+                let deltaOmega = vec3.scale(angularAcc, deltaTime);
+                this.angularVelocity = vec3.add(this.angularVelocity, deltaOmega);
+                // vec3.add(this.angularVelocity, vec3.mulScalar(right, amount), this.angularVelocity);
+            } else if (childAxis == 'y') {
+                let up = new Float32Array(this.child.rotationMatrix.buffer, 4 * 4, 3);
+                let torqueVec = vec3.scale(up, amount);
+                let angularAcc = vec3.scale(torqueVec, 1 / I);
+                if (vec3.len(angularAcc) > MAX_ANGULAR_ACCEL) {
+                    angularAcc = vec3.scale(angularAcc, MAX_ANGULAR_ACCEL / vec3.len(angularAcc));
+                }
+                let deltaOmega = vec3.scale(angularAcc, deltaTime);
+                this.angularVelocity = vec3.add(this.angularVelocity, deltaOmega);
+                // vec3.add(this.angularVelocity, vec3.mulScalar(up, amount), this.angularVelocity);
+            } else {
+                let back = new Float32Array(this.child.rotationMatrix.buffer, 4 * 8, 3);
+                let torqueVec = vec3.scale(back, amount);
+                let angularAcc = vec3.scale(torqueVec, 1 / I);
+                if (vec3.len(angularAcc) > MAX_ANGULAR_ACCEL) {
+                    angularAcc = vec3.scale(angularAcc, MAX_ANGULAR_ACCEL / vec3.len(angularAcc));
+                }
+                let deltaOmega = vec3.scale(angularAcc, deltaTime);
+                this.angularVelocity = vec3.add(this.angularVelocity, deltaOmega);
+                // vec3.add(this.angularVelocity, vec3.mulScalar(back, amount), this.angularVelocity);
+            }
         }
     }
 

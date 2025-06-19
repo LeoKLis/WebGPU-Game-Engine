@@ -1,6 +1,7 @@
 import { rotate } from "mathjs";
 import { IObject } from "./interfaces/IObject";
 import { Object } from "./Objects/object";
+import { Vec3 } from "wgpu-matrix";
 
 export enum ControllerDevice {
     mouse,
@@ -92,7 +93,7 @@ export class InputHandler {
         return output;
     }
 
-    public control (object: Object, moveSpeed: number, rotateSpeed:number, deltaTime: number, device: ControllerDevice) {
+    public control(object: Object, grounded: boolean, moveSpeed: number, rotateSpeed: number, jumpForce: number, deltaTime: number, device: ControllerDevice) {
         let used = false;
         if (device == ControllerDevice.keyboard) {
             let keyPressed = this.getKeysPressed();
@@ -101,22 +102,29 @@ export class InputHandler {
                 used = true;
                 switch (key) {
                     case 'a':
-                        object.globalRotate(0, rotateSpeed * deltaTime, 0);
+                        object.globalRotate(0, 100 * deltaTime, 0);
                         break;
                     case 'd':
-                        object.globalRotate(0, -rotateSpeed * deltaTime, 0);
+                        object.globalRotate(0, -100 * deltaTime, 0);
                         break;
                     case 'w':
-                        object.rotateAroundChild('x', -rotateSpeed * deltaTime);
+                        object.rotateRelative('x', -rotateSpeed * deltaTime);
                         break;
                     case 's':
-                        object.rotateAroundChild('x', rotateSpeed * deltaTime);
+                        object.rotateRelative('x', rotateSpeed * deltaTime);
                         break;
                     case 'q':
-                        object.rotateAroundChild('z', rotateSpeed * deltaTime);
+                        object.rotateRelative('z', rotateSpeed * deltaTime);
                         break;
                     case 'e':
-                        object.rotateAroundChild('z', -rotateSpeed * deltaTime);
+                        object.rotateRelative('z', -rotateSpeed * deltaTime);
+                        break;
+                    case ' ':
+                        if (grounded)
+                            object.addForce(0, jumpForce * deltaTime, 0);
+                        break;
+                    case 'r':
+                        location.reload();
                         break;
                 }
             });
@@ -139,6 +147,41 @@ export class InputHandler {
             }
             object.localMove(0, 0, mouseMove[2] * deltaTime * -moveSpeed);
         }
+        return used;
+    }
+
+    public forceControl(moveAccel: number, rotateAccel: number, objVelocity: Vec3, objAngularVelocity: Vec3, deltaTime: number) {
+        let used = false;
+        let keyPressed = this.getKeysPressed();
+        keyPressed.forEach((val, key) => {
+            if (!val) return;
+            used = true;
+            switch (key) {
+                case 'a':
+                    // object.globalRotate(0, rotateSpeed * deltaTime, 0);
+                    break;
+                case 'd':
+                    // object.globalRotate(0, -rotateSpeed * deltaTime, 0);
+                    break;
+                case 'w':
+                    // object.rotateAroundChild('x', -rotateSpeed * deltaTime);
+                    objAngularVelocity[0] += rotateAccel * deltaTime;
+                    break;
+                case 's':
+                    // object.rotateAroundChild('x', rotateSpeed * deltaTime);
+                    objAngularVelocity[0] -= rotateAccel * deltaTime;
+                    break;
+                case 'q':
+                    // object.rotateAroundChild('z', rotateSpeed * deltaTime);
+                    objAngularVelocity[2] += rotateAccel * deltaTime;
+                    break;
+                case 'e':
+                    // object.rotateAroundChild('z', -rotateSpeed * deltaTime);
+                    objAngularVelocity[2] -= rotateAccel * deltaTime;
+                    break;
+            }
+        });
+
         return used;
     }
 }

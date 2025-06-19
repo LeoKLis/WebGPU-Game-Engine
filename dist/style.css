@@ -16,10 +16,75 @@ html, body {
     height: 100%;
 }
 
-/* #sidebar {
-    width: 20%;
-    background-color: white;
-} */
+#controls {
+    transition-duration: 0.4s;
+    font-size: larger;
+    font-weight: lighter;
+    padding: 15px;
+    background-color: #f9f9f9;
+    color: black;
+    position: absolute;
+    border-radius: 5px;
+    right: 30px;
+    transform: translateY(-91%);
+    top: 15px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: self-start;
+}
+
+#controls:hover {
+    transform: translateY(0);
+}
+
+#info {
+    margin-bottom: 3px;
+    margin-top: 3px;
+}
+
+#sliders {
+    transition-duration: 0.4s;
+    font-size: larger;
+    font-weight: lighter;
+    padding: 15px;
+    background-color: #f9f9f9;
+    color: black;
+    position: absolute;
+    border-radius: 5px;
+    left: 15px;
+    transform: translateY(-94%);
+    top: 15px;
+    width: 250px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: self-start;
+}
+
+#sliders:not(pinned):hover {
+    transform: translateY(0);
+}
+
+#sliders.pinned {
+    transform: translateY(0);
+}
+
+input, #lbl{
+    margin-bottom: 7px;
+    margin-top: 7px;
+}
+
+#el {
+    justify-self: right;
+    font-size: medium;
+    margin-bottom: 7px;
+    margin-top: 7px;
+}
+
+span {
+    font-size: medium;
+}
 
 .object {
     background-color: whitesmoke;

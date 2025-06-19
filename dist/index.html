@@ -8,14 +8,60 @@
 </head>
 <body>
     <div id="container">
-        <!-- <div id="sidebar">
-            <div class="object">
-                <div class="name">Kocka</div>
-                <hr>
-                <div class="position">Pozicija: [1.0, 0.0, 1.0]</div>
-                <div class="rotation">Rotacija: [0.0, 0.0, 0.0]</div>
+        <div id="sliders">
+            <div id="pin" style="cursor: pointer;">Pin 📌</div>
+            <br>
+            <div id="slider">
+                
+                <div id="lbl">[<span id="gravityVal"></span> m/s<sup>2</sup>] Gravity:</div>
+                <input type="range" name="gravity" id="gravity" min="0" max="20">
             </div>
-        </div> -->
+            <div id="slider">
+                
+                <div id="lbl">[<span id="frictionVal"></span>] Friction coef:</div>
+                <input type="range" name="friction" id="friction" min="0" max="20" value="6">
+            </div>
+            <div id="slider">
+                <div id="lbl">[<span id="angvelVal"></span> deg/s] Angular velocity:</div>
+                <input type="range" name="angvel" id="angvel" min="0" max="10" value="6">
+            </div>
+            <div id="slider">
+                <div id="lbl">[<span id="rolldampVal"></span>] Roll damping coef:</div>
+                <input type="range" name="rolldamp" id="rolldamp" min="0" max="10">
+            </div>
+            <div id="slider">
+                <div id="lbl">[<span id="jumpforceVal"></span> N] Jump force:</div>
+                <input type="range" name="jumpforce" id="jumpforce" min="0" max="10" value="3">
+            </div>
+            <br>
+                Sliders
+        </div>
+        <div id="controls">
+            <div id="info">
+                [W] - roll forward
+            </div>
+            <div id="info">
+                [S] - roll backward 
+            </div>
+            <div id="info">
+                [Q] - roll left 
+            </div>
+            <div id="info">
+                [E] - roll right 
+            </div>
+            <div id="info">
+                [A] - turn left 
+            </div>
+            <div id="info">
+                [D] - turn right 
+            </div>
+            <div id="info">
+                <hr>
+                [R] - reset
+            </div>
+            <br>
+            Controls
+        </div>
         <canvas id="canvas"></canvas>
     </div>
     <script src="main.bundle.js"></script>

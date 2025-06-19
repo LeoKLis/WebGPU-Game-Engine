@@ -36,6 +36,10 @@ export class Camera extends Object {
     public getData() {
         let cameraWorldMatrix = mat4.multiply(this.positionMatrix, this.rotationMatrix);
         let cameraViewMatrix = mat4.inverse(cameraWorldMatrix);
-        return mat4.multiply(this.projectionMatrix, cameraViewMatrix);
+        // return mat4.multiply(this.projectionMatrix, cameraViewMatrix);
+        return {
+            projection: this.projectionMatrix,
+            camera: cameraViewMatrix 
+        }
     }
 }
