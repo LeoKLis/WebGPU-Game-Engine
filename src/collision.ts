@@ -1,6 +1,6 @@
 import { mat4, vec3 } from "wgpu-matrix";
-import { Cube } from "./Objects/shapes/cube";
-import { Sphere } from "./Objects/shapes/sphere";
+import { Cube } from "./objects/shapes/cube";
+import { Sphere } from "./objects/shapes/sphere";
 
 
 export function checkCollision(sphere: Sphere, cube: Cube) {

@@ -10,13 +10,13 @@
 
 __webpack_require__.a(module, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _src_Objects_camera__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./src/Objects/camera */ "./src/Objects/camera.ts");
+/* harmony import */ var _src_objects_camera__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./src/objects/camera */ "./src/objects/camera.ts");
 /* harmony import */ var _src_inputHandler__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./src/inputHandler */ "./src/inputHandler.ts");
 /* harmony import */ var _src_renderer__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./src/renderer */ "./src/renderer.ts");
 /* harmony import */ var _src_scene__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./src/scene */ "./src/scene.ts");
-/* harmony import */ var _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./src/Objects/shapes/cube */ "./src/Objects/shapes/cube.ts");
-/* harmony import */ var _src_Objects_light__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./src/Objects/light */ "./src/Objects/light.ts");
-/* harmony import */ var _src_Objects_shapes_sphere__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./src/Objects/shapes/sphere */ "./src/Objects/shapes/sphere.ts");
+/* harmony import */ var _src_objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./src/objects/shapes/cube */ "./src/objects/shapes/cube.ts");
+/* harmony import */ var _src_objects_light__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./src/objects/light */ "./src/objects/light.ts");
+/* harmony import */ var _src_objects_shapes_sphere__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./src/objects/shapes/sphere */ "./src/objects/shapes/sphere.ts");
 /* harmony import */ var _src_collision__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./src/collision */ "./src/collision.ts");
 /* harmony import */ var _src_textureAtlas__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./src/textureAtlas */ "./src/textureAtlas.ts");
 /* harmony import */ var wgpu_matrix__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! wgpu-matrix */ "./node_modules/wgpu-matrix/dist/3.x/wgpu-matrix.module.js");
@@ -58,17 +58,17 @@ const renderer = new _src_renderer__WEBPACK_IMPORTED_MODULE_2__.Renderer(canvas)
 await renderer.initialize(textureAtlas, './objects/skybox/');
 const inputHandler = new _src_inputHandler__WEBPACK_IMPORTED_MODULE_1__.InputHandler(canvas);
 const scene = new _src_scene__WEBPACK_IMPORTED_MODULE_3__.Scene();
-const camera = new _src_Objects_camera__WEBPACK_IMPORTED_MODULE_0__.Camera({
+const camera = new _src_objects_camera__WEBPACK_IMPORTED_MODULE_0__.Camera({
     name: "Kamera",
     id: "kameraID",
     position: [0, 7.5, -21],
     rotation: [16, 180, 0],
-    cameraType: _src_Objects_camera__WEBPACK_IMPORTED_MODULE_0__.CameraType.perspective,
+    cameraType: _src_objects_camera__WEBPACK_IMPORTED_MODULE_0__.CameraType.perspective,
     fov: 60,
     near: 0.1,
     far: 300,
 });
-const sphere = new _src_Objects_shapes_sphere__WEBPACK_IMPORTED_MODULE_6__.Sphere({
+const sphere = new _src_objects_shapes_sphere__WEBPACK_IMPORTED_MODULE_6__.Sphere({
     name: "Lopta",
     id: "sphereID",
     position: [0, 3, -9],
@@ -85,7 +85,7 @@ const sphere = new _src_Objects_shapes_sphere__WEBPACK_IMPORTED_MODULE_6__.Spher
         z: 0,
     },
 });
-const cube = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
+const cube = new _src_objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
     name: "Kocka",
     id: "kockaID",
     position: [0, 0, -11],
@@ -93,7 +93,7 @@ const cube = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
     lenght: [10, 0.5, 10],
     color: [0.3, 0.5, 0.8, 1],
 });
-const cube2 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
+const cube2 = new _src_objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
     name: "Kocka",
     id: "kockaID",
     position: [0, 0, 15],
@@ -101,7 +101,7 @@ const cube2 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
     lenght: [10, 0.5, 10],
     color: [0.3, 0.5, 0.8, 1],
 });
-const cube3 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
+const cube3 = new _src_objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
     name: "Kocka",
     id: "kockaID",
     position: [15, -2, 8],
@@ -109,7 +109,7 @@ const cube3 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
     lenght: [10, 0.5, 15],
     color: [0.3, 0.5, 0.8, 1],
 });
-const cube4 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
+const cube4 = new _src_objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
     name: "Kocka",
     id: "kockaID",
     position: [0, 7, 27],
@@ -117,7 +117,7 @@ const cube4 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
     lenght: [10, 0.5, 20],
     color: [0.3, 0.5, 0.8, 1],
 });
-const cube5 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
+const cube5 = new _src_objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
     name: "Kocka",
     id: "kockaID",
     position: [0, 14, 41],
@@ -125,7 +125,7 @@ const cube5 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
     lenght: [20, 0.5, 10],
     color: [0.3, 0.5, 0.8, 1],
 });
-const cube6 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
+const cube6 = new _src_objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
     name: "Kocka",
     id: "kockaID",
     position: [-17, 9, 41],
@@ -133,7 +133,7 @@ const cube6 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
     lenght: [10, 0.2, 10],
     color: [0.3, 0.5, 0.8, 1],
 });
-const cube7 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
+const cube7 = new _src_objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
     name: "Kocka",
     id: "kockaID",
     position: [0, -2, 35],
@@ -141,7 +141,7 @@ const cube7 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
     lenght: [10, 0.5, 25],
     color: [0.3, 0.5, 0.8, 1],
 });
-const cube8 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
+const cube8 = new _src_objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
     name: "Kocka",
     id: "kockaID",
     position: [0, -10, 10],
@@ -149,7 +149,7 @@ const cube8 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
     lenght: [2.5, 0.2, 25],
     color: [0.3, 0.5, 0.8, 1],
 });
-const cube9 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
+const cube9 = new _src_objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
     name: "Kocka",
     id: "kockaID",
     position: [-5, -10, 0],
@@ -157,7 +157,7 @@ const cube9 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
     lenght: [2.5, 0.2, 10],
     color: [0.3, 0.5, 0.8, 1],
 });
-const cube10 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
+const cube10 = new _src_objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
     name: "Kocka",
     id: "kockaID",
     position: [-4, -8, -15],
@@ -165,7 +165,7 @@ const cube10 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
     lenght: [6, 2, 6],
     color: [0.3, 0.5, 0.8, 1],
 });
-const cube11 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
+const cube11 = new _src_objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
     name: "Kocka",
     id: "kockaID",
     position: [4, -5, -24],
@@ -173,7 +173,7 @@ const cube11 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
     lenght: [6, 2, 6],
     color: [0.3, 0.5, 0.8, 1],
 });
-const cube12 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
+const cube12 = new _src_objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
     name: "Kocka",
     id: "kockaID",
     position: [14, -1, -15],
@@ -181,7 +181,7 @@ const cube12 = new _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube({
     lenght: [6, 1, 6],
     color: [0.3, 0.5, 0.8, 1],
 });
-const light = new _src_Objects_light__WEBPACK_IMPORTED_MODULE_5__.Light({
+const light = new _src_objects_light__WEBPACK_IMPORTED_MODULE_5__.Light({
     name: "Svijetlo",
     id: "svijetloID",
     position: [0, 0, 0],
@@ -210,7 +210,7 @@ let render = (time) => {
     inputHandler.control(sphere, grounded, 1, angularVelocity, jumpForce, fixedDeltaTime, _src_inputHandler__WEBPACK_IMPORTED_MODULE_1__.ControllerDevice.keyboard);
     grounded = false;
     scene.shapes.forEach((obj) => {
-        if (obj instanceof _src_Objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube) {
+        if (obj instanceof _src_objects_shapes_cube__WEBPACK_IMPORTED_MODULE_4__.Cube) {
             let collision = (0,_src_collision__WEBPACK_IMPORTED_MODULE_7__.checkCollision)(sphere, obj);
             if (collision !== undefined) {
                 obj.color.set([0, 0.8, 0.2]);
@@ -271,9 +271,235 @@ __webpack_async_result__();
 
 /***/ }),
 
-/***/ "./src/Objects/camera.ts":
+/***/ "./src/collision.ts":
+/*!**************************!*\
+  !*** ./src/collision.ts ***!
+  \**************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   checkCollision: () => (/* binding */ checkCollision)
+/* harmony export */ });
+/* harmony import */ var wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! wgpu-matrix */ "./node_modules/wgpu-matrix/dist/3.x/wgpu-matrix.module.js");
+
+function checkCollision(sphere, cube) {
+    // Pretvorba sfere u lokalni koordinatni sustav kocke
+    const localSpherePosition = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.subtract(sphere.position, cube.position);
+    const inverseRotationMatrix = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.transpose(cube.getRotationMatrix());
+    const spherePosLocal = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.transformMat4(localSpherePosition, inverseRotationMatrix);
+    // Najbliza tocka sudara
+    const closestX = Math.max(-cube.getLength()[0] / 2, Math.min(spherePosLocal[0], cube.getLength()[0] / 2));
+    const closestY = Math.max(-cube.getLength()[1] / 2, Math.min(spherePosLocal[1], cube.getLength()[1] / 2));
+    const closestZ = Math.max(-cube.getLength()[2] / 2, Math.min(spherePosLocal[2], cube.getLength()[2] / 2));
+    // Udaljenost najblize tocke i sfere
+    const dx = spherePosLocal[0] - closestX;
+    const dy = spherePosLocal[1] - closestY;
+    const dz = spherePosLocal[2] - closestZ;
+    const distanceSquared = dx * dx + dy * dy + dz * dz;
+    // Ako je udaljenost manja od radijusa, onda je sudar
+    if (distanceSquared <= sphere.getRadius() * sphere.getRadius()) {
+        let res = new Float32Array([closestX, closestY, closestZ]);
+        let outMat = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.multiply(cube.getPositionMatrix(), cube.getRotationMatrix());
+        res = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.transformMat4(res, outMat);
+        return {
+            res: res,
+            ratio: (sphere.getRadius() - Math.sqrt(distanceSquared)) / sphere.getRadius(),
+        };
+    }
+    return undefined;
+}
+
+
+/***/ }),
+
+/***/ "./src/inputHandler.ts":
+/*!*****************************!*\
+  !*** ./src/inputHandler.ts ***!
+  \*****************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   ControllerDevice: () => (/* binding */ ControllerDevice),
+/* harmony export */   InputHandler: () => (/* binding */ InputHandler)
+/* harmony export */ });
+var ControllerDevice;
+(function (ControllerDevice) {
+    ControllerDevice[ControllerDevice["mouse"] = 0] = "mouse";
+    ControllerDevice[ControllerDevice["keyboard"] = 1] = "keyboard";
+})(ControllerDevice || (ControllerDevice = {}));
+class InputHandler {
+    canvas;
+    keysPressed;
+    keyPress;
+    mouseDeltaX;
+    mouseDeltaY;
+    mouseScrollDelta;
+    leftMouseDown;
+    middleMouseDown;
+    rightMouseDown;
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.keysPressed = new Map();
+        this.keyPress = new Set();
+        this.mouseDeltaX = 0;
+        this.mouseDeltaY = 0;
+        this.mouseScrollDelta = 0;
+        this.leftMouseDown = false;
+        this.middleMouseDown = false;
+        this.rightMouseDown = false;
+        this.listen();
+    }
+    listen = () => {
+        this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+        window.addEventListener("keydown", (e) => this.keysPressed.set(e.key, true));
+        window.addEventListener("keyup", (e) => this.keysPressed.set(e.key, false));
+        this.canvas.style.touchAction = 'pinch-zoom';
+        this.canvas.addEventListener('mousedown', (e) => {
+            switch (e.button) {
+                case 0:
+                    this.leftMouseDown = true;
+                    break;
+                case 1:
+                    this.middleMouseDown = true;
+                    break;
+                case 2:
+                    this.rightMouseDown = true;
+                    break;
+            }
+        });
+        this.canvas.addEventListener('mouseup', (e) => {
+            switch (e.button) {
+                case 0:
+                    this.leftMouseDown = false;
+                case 1:
+                    this.middleMouseDown = false;
+                case 2:
+                    this.rightMouseDown = false;
+            }
+        });
+        this.canvas.addEventListener('pointermove', (e) => {
+            if (this.leftMouseDown || this.middleMouseDown || this.rightMouseDown) {
+                this.mouseDeltaX += e.movementX;
+                this.mouseDeltaY += e.movementY;
+            }
+        });
+        this.canvas.addEventListener('wheel', (e) => {
+            this.mouseScrollDelta += e.deltaY;
+        });
+    };
+    getKeysPressed() {
+        return this.keysPressed;
+    }
+    getKeyPress() {
+        return this.keyPress;
+    }
+    getMouseMovement = () => {
+        let output = [this.mouseDeltaX, this.mouseDeltaY, this.mouseScrollDelta];
+        this.mouseDeltaX = 0;
+        this.mouseDeltaY = 0;
+        this.mouseScrollDelta = 0;
+        return output;
+    };
+    control(object, grounded, moveSpeed, rotateSpeed, jumpForce, deltaTime, device) {
+        let used = false;
+        if (device == ControllerDevice.keyboard) {
+            let keyPressed = this.getKeysPressed();
+            keyPressed.forEach((val, key) => {
+                if (!val)
+                    return;
+                used = true;
+                switch (key) {
+                    case 'a':
+                        object.globalRotate(0, 100 * deltaTime, 0);
+                        break;
+                    case 'd':
+                        object.globalRotate(0, -100 * deltaTime, 0);
+                        break;
+                    case 'w':
+                        object.rotateRelative('x', -rotateSpeed * deltaTime);
+                        break;
+                    case 's':
+                        object.rotateRelative('x', rotateSpeed * deltaTime);
+                        break;
+                    case 'q':
+                        object.rotateRelative('z', rotateSpeed * deltaTime);
+                        break;
+                    case 'e':
+                        object.rotateRelative('z', -rotateSpeed * deltaTime);
+                        break;
+                    case ' ':
+                        if (grounded)
+                            object.addForce(0, jumpForce * deltaTime, 0);
+                        break;
+                    case 'r':
+                        location.reload();
+                        break;
+                }
+            });
+        }
+        if (device == ControllerDevice.mouse) {
+            let mouseMove = this.getMouseMovement();
+            if (this.leftMouseDown) {
+                object.globalMove(0, mouseMove[1] * deltaTime * -moveSpeed, 0);
+                object.localMove(mouseMove[0] * deltaTime * -moveSpeed, 0, 0);
+                used = true;
+            }
+            else if (this.rightMouseDown) {
+                object.globalRotate(mouseMove[1] * deltaTime * rotateSpeed, mouseMove[0] * deltaTime * rotateSpeed, 0);
+                used = true;
+            }
+            else if (this.middleMouseDown) {
+                object.globalRotate(0, 0, mouseMove[0] * deltaTime * rotateSpeed);
+                used = true;
+            }
+            object.localMove(0, 0, mouseMove[2] * deltaTime * -moveSpeed);
+        }
+        return used;
+    }
+    forceControl(moveAccel, rotateAccel, objVelocity, objAngularVelocity, deltaTime) {
+        let used = false;
+        let keyPressed = this.getKeysPressed();
+        keyPressed.forEach((val, key) => {
+            if (!val)
+                return;
+            used = true;
+            switch (key) {
+                case 'a':
+                    // object.globalRotate(0, rotateSpeed * deltaTime, 0);
+                    break;
+                case 'd':
+                    // object.globalRotate(0, -rotateSpeed * deltaTime, 0);
+                    break;
+                case 'w':
+                    // object.rotateAroundChild('x', -rotateSpeed * deltaTime);
+                    objAngularVelocity[0] += rotateAccel * deltaTime;
+                    break;
+                case 's':
+                    // object.rotateAroundChild('x', rotateSpeed * deltaTime);
+                    objAngularVelocity[0] -= rotateAccel * deltaTime;
+                    break;
+                case 'q':
+                    // object.rotateAroundChild('z', rotateSpeed * deltaTime);
+                    objAngularVelocity[2] += rotateAccel * deltaTime;
+                    break;
+                case 'e':
+                    // object.rotateAroundChild('z', -rotateSpeed * deltaTime);
+                    objAngularVelocity[2] -= rotateAccel * deltaTime;
+                    break;
+            }
+        });
+        return used;
+    }
+}
+
+
+/***/ }),
+
+/***/ "./src/objects/camera.ts":
 /*!*******************************!*\
-  !*** ./src/Objects/camera.ts ***!
+  !*** ./src/objects/camera.ts ***!
   \*******************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
@@ -283,7 +509,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   CameraType: () => (/* binding */ CameraType)
 /* harmony export */ });
 /* harmony import */ var wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! wgpu-matrix */ "./node_modules/wgpu-matrix/dist/3.x/wgpu-matrix.module.js");
-/* harmony import */ var _object__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./object */ "./src/Objects/object.ts");
+/* harmony import */ var _object__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./object */ "./src/objects/object.ts");
 
 
 var CameraType;
@@ -321,9 +547,9 @@ class Camera extends _object__WEBPACK_IMPORTED_MODULE_0__.Object {
 
 /***/ }),
 
-/***/ "./src/Objects/light.ts":
+/***/ "./src/objects/light.ts":
 /*!******************************!*\
-  !*** ./src/Objects/light.ts ***!
+  !*** ./src/objects/light.ts ***!
   \******************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
@@ -332,7 +558,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   Light: () => (/* binding */ Light)
 /* harmony export */ });
 /* harmony import */ var wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! wgpu-matrix */ "./node_modules/wgpu-matrix/dist/3.x/wgpu-matrix.module.js");
-/* harmony import */ var _object__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./object */ "./src/Objects/object.ts");
+/* harmony import */ var _object__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./object */ "./src/objects/object.ts");
 
 
 class Light extends _object__WEBPACK_IMPORTED_MODULE_0__.Object {
@@ -353,9 +579,9 @@ class Light extends _object__WEBPACK_IMPORTED_MODULE_0__.Object {
 
 /***/ }),
 
-/***/ "./src/Objects/object.ts":
+/***/ "./src/objects/object.ts":
 /*!*******************************!*\
-  !*** ./src/Objects/object.ts ***!
+  !*** ./src/objects/object.ts ***!
   \*******************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
@@ -631,9 +857,9 @@ class Object {
 
 /***/ }),
 
-/***/ "./src/Objects/shapes/cube.ts":
+/***/ "./src/objects/shapes/cube.ts":
 /*!************************************!*\
-  !*** ./src/Objects/shapes/cube.ts ***!
+  !*** ./src/objects/shapes/cube.ts ***!
   \************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
@@ -642,7 +868,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   Cube: () => (/* binding */ Cube)
 /* harmony export */ });
 /* harmony import */ var wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! wgpu-matrix */ "./node_modules/wgpu-matrix/dist/3.x/wgpu-matrix.module.js");
-/* harmony import */ var _shape__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./shape */ "./src/Objects/shapes/shape.ts");
+/* harmony import */ var _shape__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./shape */ "./src/objects/shapes/shape.ts");
 
 
 class Cube extends _shape__WEBPACK_IMPORTED_MODULE_0__.Shape {
@@ -773,9 +999,9 @@ class Cube extends _shape__WEBPACK_IMPORTED_MODULE_0__.Shape {
 
 /***/ }),
 
-/***/ "./src/Objects/shapes/shape.ts":
+/***/ "./src/objects/shapes/shape.ts":
 /*!*************************************!*\
-  !*** ./src/Objects/shapes/shape.ts ***!
+  !*** ./src/objects/shapes/shape.ts ***!
   \*************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
@@ -784,7 +1010,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   Shape: () => (/* binding */ Shape)
 /* harmony export */ });
 /* harmony import */ var wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! wgpu-matrix */ "./node_modules/wgpu-matrix/dist/3.x/wgpu-matrix.module.js");
-/* harmony import */ var _object__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../object */ "./src/Objects/object.ts");
+/* harmony import */ var _object__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../object */ "./src/objects/object.ts");
 
 
 class Shape extends _object__WEBPACK_IMPORTED_MODULE_0__.Object {
@@ -816,9 +1042,9 @@ class Shape extends _object__WEBPACK_IMPORTED_MODULE_0__.Object {
 
 /***/ }),
 
-/***/ "./src/Objects/shapes/sphere.ts":
+/***/ "./src/objects/shapes/sphere.ts":
 /*!**************************************!*\
-  !*** ./src/Objects/shapes/sphere.ts ***!
+  !*** ./src/objects/shapes/sphere.ts ***!
   \**************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
@@ -827,7 +1053,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   Sphere: () => (/* binding */ Sphere)
 /* harmony export */ });
 /* harmony import */ var wgpu_matrix__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! wgpu-matrix */ "./node_modules/wgpu-matrix/dist/3.x/wgpu-matrix.module.js");
-/* harmony import */ var _shape__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./shape */ "./src/Objects/shapes/shape.ts");
+/* harmony import */ var _shape__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./shape */ "./src/objects/shapes/shape.ts");
 
 
 class Sphere extends _shape__WEBPACK_IMPORTED_MODULE_0__.Shape {
@@ -905,232 +1131,6 @@ class Sphere extends _shape__WEBPACK_IMPORTED_MODULE_0__.Shape {
             }
         }
         return new Float32Array(data);
-    }
-}
-
-
-/***/ }),
-
-/***/ "./src/collision.ts":
-/*!**************************!*\
-  !*** ./src/collision.ts ***!
-  \**************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   checkCollision: () => (/* binding */ checkCollision)
-/* harmony export */ });
-/* harmony import */ var wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! wgpu-matrix */ "./node_modules/wgpu-matrix/dist/3.x/wgpu-matrix.module.js");
-
-function checkCollision(sphere, cube) {
-    // Pretvorba sfere u lokalni koordinatni sustav kocke
-    const localSpherePosition = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.subtract(sphere.position, cube.position);
-    const inverseRotationMatrix = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.transpose(cube.getRotationMatrix());
-    const spherePosLocal = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.transformMat4(localSpherePosition, inverseRotationMatrix);
-    // Najbliza tocka sudara
-    const closestX = Math.max(-cube.getLength()[0] / 2, Math.min(spherePosLocal[0], cube.getLength()[0] / 2));
-    const closestY = Math.max(-cube.getLength()[1] / 2, Math.min(spherePosLocal[1], cube.getLength()[1] / 2));
-    const closestZ = Math.max(-cube.getLength()[2] / 2, Math.min(spherePosLocal[2], cube.getLength()[2] / 2));
-    // Udaljenost najblize tocke i sfere
-    const dx = spherePosLocal[0] - closestX;
-    const dy = spherePosLocal[1] - closestY;
-    const dz = spherePosLocal[2] - closestZ;
-    const distanceSquared = dx * dx + dy * dy + dz * dz;
-    // Ako je udaljenost manja od radijusa, onda je sudar
-    if (distanceSquared <= sphere.getRadius() * sphere.getRadius()) {
-        let res = new Float32Array([closestX, closestY, closestZ]);
-        let outMat = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.mat4.multiply(cube.getPositionMatrix(), cube.getRotationMatrix());
-        res = wgpu_matrix__WEBPACK_IMPORTED_MODULE_0__.vec3.transformMat4(res, outMat);
-        return {
-            res: res,
-            ratio: (sphere.getRadius() - Math.sqrt(distanceSquared)) / sphere.getRadius(),
-        };
-    }
-    return undefined;
-}
-
-
-/***/ }),
-
-/***/ "./src/inputHandler.ts":
-/*!*****************************!*\
-  !*** ./src/inputHandler.ts ***!
-  \*****************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   ControllerDevice: () => (/* binding */ ControllerDevice),
-/* harmony export */   InputHandler: () => (/* binding */ InputHandler)
-/* harmony export */ });
-var ControllerDevice;
-(function (ControllerDevice) {
-    ControllerDevice[ControllerDevice["mouse"] = 0] = "mouse";
-    ControllerDevice[ControllerDevice["keyboard"] = 1] = "keyboard";
-})(ControllerDevice || (ControllerDevice = {}));
-class InputHandler {
-    canvas;
-    keysPressed;
-    keyPress;
-    mouseDeltaX;
-    mouseDeltaY;
-    mouseScrollDelta;
-    leftMouseDown;
-    middleMouseDown;
-    rightMouseDown;
-    constructor(canvas) {
-        this.canvas = canvas;
-        this.keysPressed = new Map();
-        this.keyPress = new Set();
-        this.mouseDeltaX = 0;
-        this.mouseDeltaY = 0;
-        this.mouseScrollDelta = 0;
-        this.leftMouseDown = false;
-        this.middleMouseDown = false;
-        this.rightMouseDown = false;
-        this.listen();
-    }
-    listen = () => {
-        this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-        window.addEventListener("keydown", (e) => this.keysPressed.set(e.key, true));
-        window.addEventListener("keyup", (e) => this.keysPressed.set(e.key, false));
-        this.canvas.style.touchAction = 'pinch-zoom';
-        this.canvas.addEventListener('mousedown', (e) => {
-            switch (e.button) {
-                case 0:
-                    this.leftMouseDown = true;
-                    break;
-                case 1:
-                    this.middleMouseDown = true;
-                    break;
-                case 2:
-                    this.rightMouseDown = true;
-                    break;
-            }
-        });
-        this.canvas.addEventListener('mouseup', (e) => {
-            switch (e.button) {
-                case 0:
-                    this.leftMouseDown = false;
-                case 1:
-                    this.middleMouseDown = false;
-                case 2:
-                    this.rightMouseDown = false;
-            }
-        });
-        this.canvas.addEventListener('pointermove', (e) => {
-            if (this.leftMouseDown || this.middleMouseDown || this.rightMouseDown) {
-                this.mouseDeltaX += e.movementX;
-                this.mouseDeltaY += e.movementY;
-            }
-        });
-        this.canvas.addEventListener('wheel', (e) => {
-            this.mouseScrollDelta += e.deltaY;
-        });
-    };
-    getKeysPressed() {
-        return this.keysPressed;
-    }
-    getKeyPress() {
-        return this.keyPress;
-    }
-    getMouseMovement = () => {
-        let output = [this.mouseDeltaX, this.mouseDeltaY, this.mouseScrollDelta];
-        this.mouseDeltaX = 0;
-        this.mouseDeltaY = 0;
-        this.mouseScrollDelta = 0;
-        return output;
-    };
-    control(object, grounded, moveSpeed, rotateSpeed, jumpForce, deltaTime, device) {
-        let used = false;
-        if (device == ControllerDevice.keyboard) {
-            let keyPressed = this.getKeysPressed();
-            keyPressed.forEach((val, key) => {
-                if (!val)
-                    return;
-                used = true;
-                switch (key) {
-                    case 'a':
-                        object.globalRotate(0, 100 * deltaTime, 0);
-                        break;
-                    case 'd':
-                        object.globalRotate(0, -100 * deltaTime, 0);
-                        break;
-                    case 'w':
-                        object.rotateRelative('x', -rotateSpeed * deltaTime);
-                        break;
-                    case 's':
-                        object.rotateRelative('x', rotateSpeed * deltaTime);
-                        break;
-                    case 'q':
-                        object.rotateRelative('z', rotateSpeed * deltaTime);
-                        break;
-                    case 'e':
-                        object.rotateRelative('z', -rotateSpeed * deltaTime);
-                        break;
-                    case ' ':
-                        if (grounded)
-                            object.addForce(0, jumpForce * deltaTime, 0);
-                        break;
-                    case 'r':
-                        location.reload();
-                        break;
-                }
-            });
-        }
-        if (device == ControllerDevice.mouse) {
-            let mouseMove = this.getMouseMovement();
-            if (this.leftMouseDown) {
-                object.globalMove(0, mouseMove[1] * deltaTime * -moveSpeed, 0);
-                object.localMove(mouseMove[0] * deltaTime * -moveSpeed, 0, 0);
-                used = true;
-            }
-            else if (this.rightMouseDown) {
-                object.globalRotate(mouseMove[1] * deltaTime * rotateSpeed, mouseMove[0] * deltaTime * rotateSpeed, 0);
-                used = true;
-            }
-            else if (this.middleMouseDown) {
-                object.globalRotate(0, 0, mouseMove[0] * deltaTime * rotateSpeed);
-                used = true;
-            }
-            object.localMove(0, 0, mouseMove[2] * deltaTime * -moveSpeed);
-        }
-        return used;
-    }
-    forceControl(moveAccel, rotateAccel, objVelocity, objAngularVelocity, deltaTime) {
-        let used = false;
-        let keyPressed = this.getKeysPressed();
-        keyPressed.forEach((val, key) => {
-            if (!val)
-                return;
-            used = true;
-            switch (key) {
-                case 'a':
-                    // object.globalRotate(0, rotateSpeed * deltaTime, 0);
-                    break;
-                case 'd':
-                    // object.globalRotate(0, -rotateSpeed * deltaTime, 0);
-                    break;
-                case 'w':
-                    // object.rotateAroundChild('x', -rotateSpeed * deltaTime);
-                    objAngularVelocity[0] += rotateAccel * deltaTime;
-                    break;
-                case 's':
-                    // object.rotateAroundChild('x', rotateSpeed * deltaTime);
-                    objAngularVelocity[0] -= rotateAccel * deltaTime;
-                    break;
-                case 'q':
-                    // object.rotateAroundChild('z', rotateSpeed * deltaTime);
-                    objAngularVelocity[2] += rotateAccel * deltaTime;
-                    break;
-                case 'e':
-                    // object.rotateAroundChild('z', -rotateSpeed * deltaTime);
-                    objAngularVelocity[2] -= rotateAccel * deltaTime;
-                    break;
-            }
-        });
-        return used;
     }
 }
 

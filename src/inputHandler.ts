@@ -1,6 +1,6 @@
 import { rotate } from "mathjs";
 import { IObject } from "./interfaces/IObject";
-import { Object } from "./Objects/object";
+import { Object } from "./objects/object";
 import { Vec3 } from "wgpu-matrix";
 
 export enum ControllerDevice {

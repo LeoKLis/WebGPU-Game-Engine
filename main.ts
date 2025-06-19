@@ -1,10 +1,10 @@
-import { Camera, CameraType } from "./src/Objects/camera";
+import { Camera, CameraType } from "./src/objects/camera";
 import { ControllerDevice, InputHandler } from "./src/inputHandler";
 import { Renderer } from "./src/renderer";
 import { Scene } from "./src/scene";
-import { Cube } from "./src/Objects/shapes/cube";
-import { Light } from "./src/Objects/light";
-import { Sphere } from "./src/Objects/shapes/sphere";
+import { Cube } from "./src/objects/shapes/cube";
+import { Light } from "./src/objects/light";
+import { Sphere } from "./src/objects/shapes/sphere";
 import { checkCollision } from "./src/collision";
 import { TextureAtlas } from "./src/textureAtlas";
 import { mat4, vec3 } from "wgpu-matrix";

@@ -1,8 +1,8 @@
-import { Camera } from "./Objects/camera";
-import { Light } from "./Objects/light";
+import { Camera } from "./objects/camera";
+import { Light } from "./objects/light";
 // import { Object } from "./Objects/object";
-import { Shape } from "./Objects/shapes/shape";
-import { Vector } from "./Objects/vector";
+import { Shape } from "./objects/shapes/shape";
+import { Vector } from "./objects/vector";
 
 export class Scene {
     public shapes: Array<Shape>;

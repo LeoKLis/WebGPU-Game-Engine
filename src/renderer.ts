@@ -1,11 +1,11 @@
-import { Camera } from "./Objects/camera";
+import { Camera } from "./objects/camera";
 import { Scene } from "./scene";
-import { Cube } from "./Objects/shapes/cube";
-import { Light } from "./Objects/light";
-import { Model } from "./Objects/shapes/model";
-import { Sphere } from "./Objects/shapes/sphere";
+import { Cube } from "./objects/shapes/cube";
+import { Light } from "./objects/light";
+import { Model } from "./objects/shapes/model";
+import { Sphere } from "./objects/shapes/sphere";
 
-import { RenderDataDescriptor } from "./Objects/shapes/shape";
+import { RenderDataDescriptor } from "./objects/shapes/shape";
 
 import objColorShader from "./shaders/objColorShader.wgsl";
 import objTextureShader from "./shaders/objTextureShader.wgsl";
