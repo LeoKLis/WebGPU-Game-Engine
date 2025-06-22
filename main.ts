@@ -210,6 +210,7 @@ async function main() {
     let lastTime = 0;
     let grounded = false;
     let gameOver = false;
+    let retry = false;
     let platformNumber = 12;
     return new Promise<void>((resolve) => {
         let render = (time: number) => {
@@ -221,7 +222,7 @@ async function main() {
                 timer.innerText = `${timerTime.toFixed(2)} s`;
             }
             if (platformNumber == 0 && gameOver == false) {
-                gameOver = true;
+                retry = true;
                 gameOverTxt.innerHTML = "Nice time!<br>" + timerTime.toFixed(2) + " s<br>Press R to reset";
             }
 
@@ -229,7 +230,7 @@ async function main() {
             lastTime = time;
 
             let reset = inputHandler.control(sphere, grounded, 1, angularVelocity, jumpForce, fixedDeltaTime, ControllerDevice.keyboard);
-            if (reset) {
+            if (reset && !gameOver || reset && retry) {
                 stop = true;
             }
             grounded = false;
@@ -284,7 +285,7 @@ async function main() {
             sphere.globalMove(sphere.velocity[0] * fixedDeltaTime, sphere.velocity[1] * fixedDeltaTime, sphere.velocity[2] * fixedDeltaTime);
             sphere.globalRotate(-sphere.angularVelocity[0] * sphere.getRadius() * 100, 0, -sphere.angularVelocity[2] * sphere.getRadius() * 100);
 
-            if (sphere.position[1] < -25 && gameOver == false) {
+            if (sphere.position[1] < -15 && gameOver == false && !retry) {
                 gameOver = true;
                 let count = 3;
                 const interval = setInterval(() => {
