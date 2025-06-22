@@ -94,12 +94,11 @@ export class InputHandler {
     }
 
     public control(object: Object, grounded: boolean, moveSpeed: number, rotateSpeed: number, jumpForce: number, deltaTime: number, device: ControllerDevice) {
-        let used = false;
+        let reset = false;
         if (device == ControllerDevice.keyboard) {
             let keyPressed = this.getKeysPressed();
             keyPressed.forEach((val, key) => {
                 if (!val) return;
-                used = true;
                 switch (key) {
                     case 'a':
                         object.globalRotate(0, 100 * deltaTime, 0);
@@ -124,7 +123,7 @@ export class InputHandler {
                             object.addForce(0, jumpForce * deltaTime, 0);
                         break;
                     case 'r':
-                        location.reload();
+                        reset = true;
                         break;
                 }
             });
@@ -135,19 +134,16 @@ export class InputHandler {
             if (this.leftMouseDown) {
                 object.globalMove(0, mouseMove[1] * deltaTime * -moveSpeed, 0);
                 object.localMove(mouseMove[0] * deltaTime * -moveSpeed, 0, 0);
-                used = true;
             }
             else if (this.rightMouseDown) {
                 object.globalRotate(mouseMove[1] * deltaTime * rotateSpeed, mouseMove[0] * deltaTime * rotateSpeed, 0);
-                used = true;
             }
             else if (this.middleMouseDown) {
                 object.globalRotate(0, 0, mouseMove[0] * deltaTime * rotateSpeed);
-                used = true;
             }
             object.localMove(0, 0, mouseMove[2] * deltaTime * -moveSpeed);
         }
-        return used;
+        return reset;
     }
 
     public forceControl(moveAccel: number, rotateAccel: number, objVelocity: Vec3, objAngularVelocity: Vec3, deltaTime: number) {

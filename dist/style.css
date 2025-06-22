@@ -16,6 +16,25 @@ html, body {
     height: 100%;
 }
 
+#gameover {
+    color: #f9f9f9;
+    text-align: center;
+    font-size: xx-large;
+    position: absolute;
+    transform: translate(-50%);
+    top: 50%;
+    left: 50%;
+}
+
+#timer {
+    color: #f9f9f9;
+    font-size: xx-large;
+    position: absolute;
+    transform: translate(-50%);
+    top: 91%;
+    left: 50%;
+}
+
 #controls {
     transition-duration: 0.4s;
     font-size: larger;

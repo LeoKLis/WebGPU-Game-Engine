@@ -7,6 +7,7 @@ export enum CameraType {
 
 export interface CameraDescriptor extends ObjectDescriptor {
     cameraType: CameraType;
+    aspectRatio: number;
     fov?: number;
     near?: number;
     far?: number;
@@ -19,13 +20,12 @@ export class Camera extends Object {
     public far: number;
     public aspectRatio: number;
 
-    private projectionMatrix: Float32Array;
+private projectionMatrix: Float32Array;
 
     constructor(cameraDescriptor: CameraDescriptor) {
         super(cameraDescriptor);
 
-        const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-        this.aspectRatio = canvas.width / canvas.height;
+        this.aspectRatio = cameraDescriptor.aspectRatio;
         this.type = cameraDescriptor.cameraType;
         this.fov = Math.PI / 3;
         this.near = 0.1;
