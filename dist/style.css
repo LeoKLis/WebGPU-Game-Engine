@@ -16,6 +16,12 @@ html, body {
     height: 100%;
 }
 
+#skybox {
+    position: absolute;
+    bottom: 5%;
+    right: 5%;
+}
+
 #gameover {
     color: #f9f9f9;
     text-align: center;

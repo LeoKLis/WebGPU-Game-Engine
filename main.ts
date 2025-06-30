@@ -18,6 +18,7 @@ const jumpforceSpan = document.getElementById("jumpforceVal") as HTMLSpanElement
 const gameOverTxt = document.getElementById("gameover") as HTMLDivElement;
 const timer = document.getElementById("timer") as HTMLDivElement;
 
+
 let pinned = false;
 const sliders = document.getElementById("sliders") as HTMLDivElement;
 const pinBtn = document.getElementById("pin") as HTMLDivElement;
@@ -48,6 +49,14 @@ const renderer = new Renderer(canvas);
 await renderer.initialize(textureAtlas, './objects/skybox/');
 
 const inputHandler = new InputHandler(canvas);
+
+let skyboxEnabled = true;
+const skyboxBtn = document.getElementById("skybox") as HTMLButtonElement;
+skyboxBtn.addEventListener("click", () => {
+    skyboxEnabled = !skyboxEnabled;
+    console.log(skyboxEnabled);
+    renderer.setSkybox(skyboxEnabled);
+});
 
 async function main() {
     let stop = false;
